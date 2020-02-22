@@ -7,6 +7,7 @@ import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploSoloBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ReceiveMessageBehaviour;
+import eu.su.mas.dedaleEtu.mas.behaviours.SayHello;
 import eu.su.mas.dedaleEtu.mas.behaviours.seeOtherAgentBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.test;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
@@ -51,8 +52,9 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		 ************************************************/
 		
 		lb.add(new ExploSoloBehaviour(this,this.myMap,this.stopped));
-		lb.add(new test(this));
-		lb.add(new seeOtherAgentBehaviour(this));
+		//lb.add(new test(this));
+		lb.add(new SayHello(this));
+		//lb.add(new seeOtherAgentBehaviour(this));
 		lb.add(new ReceiveMessageBehaviour(this));
 		
 		

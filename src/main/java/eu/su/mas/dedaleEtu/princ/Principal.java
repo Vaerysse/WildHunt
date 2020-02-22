@@ -389,7 +389,7 @@ public class Principal {
 		Object [] entityParametersExplo1={"My parameters"};
 		
 		//4) Give the class name of your agent to let the system instantiate it
-		ag=createNewDedaleAgent(c, agentName, ExploreSoloAgent.class.getName(), entityParametersExplo1);//
+		ag=createNewDedaleAgent(c, agentName, ExploreSoloAgent.class.getName(), entityParametersExplo1);//DummyMovingAgent
 		agentList.add(ag);
 		
 		/*********
@@ -406,7 +406,7 @@ public class Principal {
 		Object [] entityParametersExplo2={"My parameters"};
 		
 		//4) Give the class name of your agent to let the system instantiate it
-		ag=createNewDedaleAgent(c, agentName, DummyMovingAgent.class.getName(), entityParametersExplo2);//ExploreSoloAgent
+		ag=createNewDedaleAgent(c, agentName, ExploreSoloAgent.class.getName(), entityParametersExplo2);//ExploreSoloAgent
 		
 		agentList.add(ag);
 //		

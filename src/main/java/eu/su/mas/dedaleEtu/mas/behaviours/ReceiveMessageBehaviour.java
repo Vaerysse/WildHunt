@@ -32,12 +32,13 @@ public class ReceiveMessageBehaviour extends SimpleBehaviour{
 
 	public void action() {
 		//1) receive the message
-		final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);			
-
+		final MessageTemplate msgTemplate =  MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+												MessageTemplate.MatchProtocol("UselessProtocol"));		
 		final ACLMessage msg = this.myAgent.receive(msgTemplate);
+		System.out.println("RAS");
 		if (msg != null) {		
 			System.out.println(this.myAgent.getLocalName()+"<----Result received from "+msg.getSender().getLocalName()+" ,content= "+msg.getContent());
-			this.finished=true;
+			block();
 		}else{
 			block();// the behaviour goes to sleep until the arrival of a new message in the agent's Inbox.
 		}

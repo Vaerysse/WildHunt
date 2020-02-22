@@ -75,7 +75,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 		if (myPosition!=null){
 			//List of observable from the agent's current position
 			List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
-			//je regarde la liste des agaents présent dans mon rayon
+			//je regarde la liste des agents présent dans mon rayon
 			//je compart à ma blackList
 			//si il y a un nouvel agent, je block() et j'entamme la conversation (autre behaviour)
 			//sinon je continue trankille
