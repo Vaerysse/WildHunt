@@ -48,23 +48,17 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 	 * Visited nodes
 	 */
 	private Set<String> closedNodes;
-	/**
-	 * Je suspend l'exploration
-	 */
-	private boolean stopped;
 
 
-	public ExploSoloBehaviour(final AbstractDedaleAgent myagent, MapRepresentation myMap, boolean stopped) {
+	public ExploSoloBehaviour(final AbstractDedaleAgent myagent, MapRepresentation myMap) {
 		super(myagent);
 		this.myMap=myMap;
 		this.openNodes=new ArrayList<String>();
 		this.closedNodes=new HashSet<String>();
-		this.stopped = stopped;
 	}
 
 	@Override
 	public void action() {
-		
 
 		if(this.myMap==null)
 			this.myMap= new MapRepresentation();
@@ -75,10 +69,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 		if (myPosition!=null){
 			//List of observable from the agent's current position
 			List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
-			//je regarde la liste des agents présent dans mon rayon
-			//je compart à ma blackList
-			//si il y a un nouvel agent, je block() et j'entamme la conversation (autre behaviour)
-			//sinon je continue trankille
+
 			/**
 			 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 			 */
@@ -178,10 +169,13 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				/************************************************
 				 * 				END API CALL ILUSTRATION
 				 *************************************************/
-				if (this.stopped){
-					block();
-				}
+				
+				if (!((ExploreSoloAgent) this.myAgent).getStopped()){
 					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
+				}
+				else {
+					System.out.println("Ho là là, je suis si fatigué!");
+				}
 			}
 
 		}

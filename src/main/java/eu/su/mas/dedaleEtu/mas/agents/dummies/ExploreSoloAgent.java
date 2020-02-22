@@ -6,11 +6,11 @@ import java.util.List;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploSoloBehaviour;
+import eu.su.mas.dedaleEtu.mas.behaviours.PrivateCanalBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ReceiveMessageBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.SayHello;
-import eu.su.mas.dedaleEtu.mas.behaviours.seeOtherAgentBehaviour;
-import eu.su.mas.dedaleEtu.mas.behaviours.test;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
+import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
 import jade.core.behaviours.Behaviour;
 
 /**
@@ -28,8 +28,8 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 
 	private static final long serialVersionUID = -6431752665590433727L;
 	private MapRepresentation myMap;
-	private List<String> blackList;// Stock la liste des agents toujours dans le périmétre mais avec lesquels les informations ont déjà été échangées
-	private boolean stopped;// Je stop mon exploration
+	private boolean stopped = false;
+	
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -51,11 +51,11 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		 * 
 		 ************************************************/
 		
-		lb.add(new ExploSoloBehaviour(this,this.myMap,this.stopped));
-		//lb.add(new test(this));
-		lb.add(new SayHello(this));
-		//lb.add(new seeOtherAgentBehaviour(this));
+		lb.add(new ExploSoloBehaviour(this,this.myMap));
 		lb.add(new ReceiveMessageBehaviour(this));
+		//lb.add(new SayHello(this));
+		lb.add(new PrivateCanalBehaviour(this, "Explo1", this.myMap));
+		lb.add(new PrivateCanalBehaviour(this, "Explo2", this.myMap));
 		
 		
 		/***
@@ -67,6 +67,14 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		
 		System.out.println("the  agent "+this.getLocalName()+ " is started");
 
+	}
+
+	public boolean getStopped() {
+		return this.stopped;
+	}
+	
+	public void setStopped(boolean value) {
+		this.stopped = value;
 	}
 	
 	

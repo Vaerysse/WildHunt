@@ -81,7 +81,8 @@ public final class ConfigurationFile {
 	/**
 	 * Must'nt be null as it describes the agents capabilities on the map
 	 */
-	public static String INSTANCE_CONFIGURATION_ENTITIES="resources/agentExplo";
+	//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/agentExplo";
+	public static String INSTANCE_CONFIGURATION_ENTITIES="resources/agentExplo-2";
 	//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/map2018-entities2";
 	//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/map2019-entitiesExam1";
 	//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/monoAgent-entities";
@@ -99,12 +100,12 @@ public final class ConfigurationFile {
 	/**
 	 * Parameter used to generate the environment 
 	 */
-	public static Integer ENVIRONMENT_SIZE=5;
+	public static Integer ENVIRONMENT_SIZE=10;
 	
 	/**
 	 * Parameter used to perceive the wumpus trough its smell
 	 */
-	public static final Integer DEFAULT_DETECTION_RADIUS = 1;
+	public static final Integer DEFAULT_DETECTION_RADIUS = 3;
 	
 	/**true if a grid environment should be generated, false otherwise (A dogoronev env is generated)**/
 	public static boolean ENVIRONMENTisGRID=true;

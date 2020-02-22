@@ -24,7 +24,7 @@ public class SayHello extends TickerBehaviour{
 	 *  
 	 */
 	public SayHello (final Agent myagent) {
-		super(myagent, 3000);
+		super(myagent, 1000);
 		//super(myagent);
 	}
 
@@ -40,10 +40,9 @@ public class SayHello extends TickerBehaviour{
 		if (myPosition!=""){
 			//System.out.println("Agent "+this.myAgent.getLocalName()+ " is trying to reach its friends");
 			msg.setContent("Hello World, I'm at "+myPosition);
-			System.out.println("Hello world");
 
-			msg.addReceiver(new AID("Collect1",AID.ISLOCALNAME));
-			msg.addReceiver(new AID("Collect2",AID.ISLOCALNAME));
+			msg.addReceiver(new AID("Explo1",AID.ISLOCALNAME));
+			msg.addReceiver(new AID("Explo2",AID.ISLOCALNAME));
 
 			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
