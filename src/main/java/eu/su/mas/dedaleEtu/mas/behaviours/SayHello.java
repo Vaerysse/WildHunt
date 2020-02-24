@@ -30,19 +30,19 @@ public class SayHello extends TickerBehaviour{
 
 	@Override
 	public void onTick() {
-		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+		String myPosition = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
 		//A message is defined by : a performative, a sender, a set of receivers, (a protocol),(a content (and/or contentOBject))
-		ACLMessage msg=new ACLMessage(ACLMessage.INFORM);
+		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		msg.setSender(this.myAgent.getAID());
 		msg.setProtocol("UselessProtocol");
 
-		if (myPosition!=""){
+		if (myPosition != ""){
 			//System.out.println("Agent "+this.myAgent.getLocalName()+ " is trying to reach its friends");
 			msg.setContent("Hello World, I'm at "+myPosition);
 
-			msg.addReceiver(new AID("Explo1",AID.ISLOCALNAME));
-			msg.addReceiver(new AID("Explo2",AID.ISLOCALNAME));
+			msg.addReceiver(new AID("Explo1", AID.ISLOCALNAME));
+			msg.addReceiver(new AID("Explo2", AID.ISLOCALNAME));
 
 			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);

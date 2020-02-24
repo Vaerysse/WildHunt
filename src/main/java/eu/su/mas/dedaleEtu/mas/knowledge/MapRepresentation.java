@@ -35,7 +35,7 @@ public class MapRepresentation implements Serializable {
 	 */
 
 	public enum MapAttribute {
-		agent,open,closed
+		agent, open, closed
 	}
 
 	private static final long serialVersionUID = -1333959882640838272L;
@@ -44,14 +44,14 @@ public class MapRepresentation implements Serializable {
 	 * Parameters for graph rendering
 	 ********************************/
 
-	private String defaultNodeStyle= "node {"+"fill-color: black;"+" size-mode:fit;text-alignment:under; text-size:14;text-color:white;text-background-mode:rounded-box;text-background-color:black;}";
+	private String defaultNodeStyle = "node {"+"fill-color: black;"+" size-mode:fit;text-alignment:under; text-size:14;text-color:white;text-background-mode:rounded-box;text-background-color:black;}";
 	private String nodeStyle_open = "node.agent {"+"fill-color: forestgreen;"+"}";
 	private String nodeStyle_agent = "node.open {"+"fill-color: blue;"+"}";
-	private String nodeStyle=defaultNodeStyle+nodeStyle_agent+nodeStyle_open;
+	private String nodeStyle = defaultNodeStyle+nodeStyle_agent+nodeStyle_open;
 
 	private Graph g; //data structure non serializable
 	private Viewer viewer; //ref to the display,  non serializable
-	private Integer nbEdges;//used to generate the edges ids
+	private Integer nbEdges; //used to generate the edges ids
 
 	private SerializableSimpleGraph<String, MapAttribute> sg;//used as a temporary dataStructure during migration
 
@@ -59,15 +59,15 @@ public class MapRepresentation implements Serializable {
 	public MapRepresentation() {
 		//System.setProperty("org.graphstream.ui.renderer","org.graphstream.ui.j2dviewer.J2DGraphRenderer");
 		System.setProperty("org.graphstream.ui", "javafx");
-		this.g= new SingleGraph("My world vision");
-		this.g.setAttribute("ui.stylesheet",nodeStyle);
+		this.g = new SingleGraph("My world vision");
+		this.g.setAttribute("ui.stylesheet", nodeStyle);
 
 		Platform.runLater(() -> {
 			openGui();
 		});
 		//this.viewer = this.g.display();
 
-		this.nbEdges=0;
+		this.nbEdges = 0;
 	}
 
 	/**
@@ -75,16 +75,16 @@ public class MapRepresentation implements Serializable {
 	 * @param id Id of the node
 	 * @param mapAttribute associated state of the node
 	 */
-	public void addNode(String id,MapAttribute mapAttribute){
+	public void addNode(String id, MapAttribute mapAttribute) {
 		Node n;
-		if (this.g.getNode(id)==null){
-			n=this.g.addNode(id);
+		if (this.g.getNode(id) == null){
+			n = this.g.addNode(id);
 		}else{
-			n=this.g.getNode(id);
+			n = this.g.getNode(id);
 		}
 		n.clearAttributes();
 		n.setAttribute("ui.class", mapAttribute.toString());
-		n.setAttribute("ui.label",id);
+		n.setAttribute("ui.label", id);
 	}
 
 	/**
@@ -92,7 +92,7 @@ public class MapRepresentation implements Serializable {
 	 * @param idNode1 one side of the edge
 	 * @param idNode2 the other side of the edge
 	 */
-	public void addEdge(String idNode1,String idNode2){
+	public void addEdge(String idNode1,String idNode2) {
 		try {
 			this.nbEdges++;
 			this.g.addEdge(this.nbEdges.toString(), idNode1, idNode2);
@@ -101,6 +101,29 @@ public class MapRepresentation implements Serializable {
 			this.nbEdges--;
 		}
 
+	}
+	
+	/**
+	 * Merge two MapRepresentation together 
+	 * @param map the MapRepresentation to merge with
+	 */
+	public void merge(MapRepresentation map) {
+		
+		// TODO
+		/**
+		 * parcourir tous les edges et les ajouter
+		 * parcourir tous les noeuds et :
+		 * 	- les ajouter si inexistants
+		 *  - si existants, màj de l'attribut si nécessaire
+		 */
+		
+		//org.graphstream.graph.implementations.Graphs
+		//mergeIn(this.g, map.getGraph());
+		
+	}
+	
+	private Graph getGraph() {
+		return this.g;
 	}
 
 	/**
@@ -197,4 +220,5 @@ public class MapRepresentation implements Serializable {
 		viewer.addDefaultView(true);
 		g.display();
 	}
+	
 }

@@ -52,21 +52,21 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 
 	public ExploSoloBehaviour(final AbstractDedaleAgent myagent, MapRepresentation myMap) {
 		super(myagent);
-		this.myMap=myMap;
-		this.openNodes=new ArrayList<String>();
-		this.closedNodes=new HashSet<String>();
+		this.myMap = myMap;
+		this.openNodes = new ArrayList<String>();
+		this.closedNodes = new HashSet<String>();
 	}
 
 	@Override
 	public void action() {
 
-		if(this.myMap==null)
-			this.myMap= new MapRepresentation();
+		if (this.myMap == null)
+			this.myMap = new MapRepresentation();
 		
 		//0) Retrieve the current position
-		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+		String myPosition = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 	
-		if (myPosition!=null){
+		if (myPosition != null){
 			//List of observable from the agent's current position
 			List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
 
@@ -170,7 +170,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				 * 				END API CALL ILUSTRATION
 				 *************************************************/
 				
-				if (!((ExploreSoloAgent) this.myAgent).getStopped()){
+				if (((ExploreSoloAgent) this.myAgent).isMoving()){
 					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
 				}
 				else {

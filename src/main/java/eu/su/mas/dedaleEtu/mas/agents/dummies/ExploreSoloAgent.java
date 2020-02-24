@@ -6,7 +6,7 @@ import java.util.List;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploSoloBehaviour;
-import eu.su.mas.dedaleEtu.mas.behaviours.PrivateCanalBehaviour;
+import eu.su.mas.dedaleEtu.mas.behaviours.PrivateChannelBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ReceiveMessageBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.SayHello;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
@@ -28,7 +28,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 
 	private static final long serialVersionUID = -6431752665590433727L;
 	private MapRepresentation myMap;
-	private boolean stopped = false;
+	private boolean moving = false;
 	
 
 	/**
@@ -54,8 +54,8 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		lb.add(new ExploSoloBehaviour(this,this.myMap));
 		lb.add(new ReceiveMessageBehaviour(this));
 		//lb.add(new SayHello(this));
-		lb.add(new PrivateCanalBehaviour(this, "Explo1", this.myMap));
-		lb.add(new PrivateCanalBehaviour(this, "Explo2", this.myMap));
+		lb.add(new PrivateChannelBehaviour(this, "Explo1", this.myMap));
+		lb.add(new PrivateChannelBehaviour(this, "Explo2", this.myMap));
 		
 		
 		/***
@@ -69,12 +69,12 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 
 	}
 
-	public boolean getStopped() {
-		return this.stopped;
+	public boolean isMoving() {
+		return this.moving;
 	}
 	
-	public void setStopped(boolean value) {
-		this.stopped = value;
+	public void setMoving(boolean value) {
+		this.moving = value;
 	}
 	
 	
