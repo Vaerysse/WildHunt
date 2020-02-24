@@ -117,8 +117,20 @@ public class MapRepresentation implements Serializable {
 		 *  - si existants, màj de l'attribut si nécessaire
 		 */
 		
-		//org.graphstream.graph.implementations.Graphs
+		/**
+		 * QUESTION: on est censé coder la fusion des graphes entièrement à la main ou il existe 
+		 * des méthodes de GraphStream permettant de le faire plus directement ?
+		 * Parce que je n'arrive pas à faire fontionner les méthodes merge et mergeIn (qui
+		 * appartiennent à l'import org.graphstream.graph.implementations.Graphs)
+		 * Quelle est la différence entre org.graphstream.graph.implementations.Graphs et org.graphstream.Graph ?
+		 */
+		
 		//mergeIn(this.g, map.getGraph());
+		
+		/**
+		 * AUTRE QUESTION: est-ce qu'on a le droit de stocker tout ce qu'on veut dans les agents ?
+		 * Par exemple utiliser une horloge scalaire/vectorielle...
+		 */
 		
 	}
 	
