@@ -3,6 +3,7 @@ package eu.su.mas.dedaleEtu.mas.behaviours;
 import java.io.IOException;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
+import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import jade.core.AID;
 import jade.core.Agent;
@@ -42,10 +43,10 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 	 * @param myagent
 	 * @param receiverName The local name of the agent myagent tries to communicate with
 	 */
-	public PrivateChannelBehaviour(final Agent myagent, String receiverName, MapRepresentation myMap) {
+	public PrivateChannelBehaviour(final Agent myagent, String receiverName) {
 		super(myagent);
 		
-		this.myMap = myMap;
+		this.myMap =((ExploreSoloAgent)this.myAgent).getMap();
 		this.receiverName = receiverName;
 		this.finished = false;
 		this.connection = true;
@@ -80,7 +81,6 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			} catch (IOException e) {
 				msg.setContent("-1");
 				System.out.println("Map serialization problem");
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
@@ -104,11 +104,10 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 										  MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 										  MessageTemplate.MatchSender(new AID(this.receiverName, AID.ISLOCALNAME))),
 										  MessageTemplate.MatchProtocol("ExchangeProtocol"));			
-
 			ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
-			System.out.println(this.myAgent.getLocalName() + ": I've received a request for a private channel from " + this.receiverName);
+			System.out.println("En attente de récéption message de demande de com priver");
 			if (msgReceived != null) {
-				//System.out.println(msgReceived.getContent());
+				System.out.println(this.myAgent.getLocalName() + ": I've received a request for a private channel from " + this.receiverName);
 				if (msgReceived.getContent().equals("connection")) {
 					this.connection = false;
 					this.exchange = true;
@@ -148,15 +147,14 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 										  MessageTemplate.MatchProtocol("ExchangeProtocol"));			
 
 			ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
-			//System.out.println(this.myAgent.getLocalName() + ": regarde la receptioon message ACK : " + this.receiverName);
 			if (msgReceived != null) {
 				if (msgReceived.getContent().equals("ACKmap") ) {
 					System.out.println(this.myAgent.getLocalName() + ": I've received an ACK map from " + this.receiverName);
 					this.finished = true;
+					((ExploreSoloAgent)this.myAgent).setMoving(true);
 				}
 				else if (msgReceived.getContent() == "-1" ) {
 					System.out.println("ACK map reception problem");
-					this.finished = true;
 				}
 			}
 		}

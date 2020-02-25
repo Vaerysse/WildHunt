@@ -69,7 +69,9 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 		if (myPosition != null){
 			//List of observable from the agent's current position
 			List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
-
+			
+			System.out.println(lobs);
+			
 			/**
 			 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 			 */
@@ -172,6 +174,13 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				
 				if (((ExploreSoloAgent) this.myAgent).isMoving()){
 					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
+					List<String> listAgentZone = ((ExploreSoloAgent)this.myAgent).getAgentZoneList();
+					for(int a = 0; a < listAgentZone.size(); a++) {
+						if (((ExploreSoloAgent)this.myAgent).getAgentBlackList().contains(listAgentZone.get(a)) == false){
+							((ExploreSoloAgent)this.myAgent).supAgentBlackList(listAgentZone.get(a));
+						}
+					}
+					((ExploreSoloAgent)this.myAgent).supAgentZoneList();
 				}
 				else {
 					System.out.println("Ho là là, je suis si fatigué!");

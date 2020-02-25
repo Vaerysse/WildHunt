@@ -105,7 +105,7 @@ public final class ConfigurationFile {
 	/**
 	 * Parameter used to perceive the wumpus trough its smell
 	 */
-	public static final Integer DEFAULT_DETECTION_RADIUS = 3;
+	public static final Integer DEFAULT_DETECTION_RADIUS =5;
 	
 	/**true if a grid environment should be generated, false otherwise (A dogoronev env is generated)**/
 	public static boolean ENVIRONMENTisGRID=true;
