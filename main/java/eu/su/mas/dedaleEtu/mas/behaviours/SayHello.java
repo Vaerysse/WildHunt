@@ -25,7 +25,6 @@ public class SayHello extends TickerBehaviour{
 	 */
 	public SayHello (final Agent myagent) {
 		super(myagent, 1000);
-		//super(myagent);
 	}
 
 	@Override
@@ -38,9 +37,10 @@ public class SayHello extends TickerBehaviour{
 		msg.setProtocol("UselessProtocol");
 
 		if (myPosition != ""){
-			//System.out.println("Agent "+this.myAgent.getLocalName()+ " is trying to reach its friends");
+			System.out.println("Agent "+this.myAgent.getLocalName()+ " is trying to reach its friends");
 			msg.setContent("Hello World, I'm at "+myPosition);
-
+			
+			//Faire une création de message selon les agents présent
 			msg.addReceiver(new AID("Explo1", AID.ISLOCALNAME));
 			msg.addReceiver(new AID("Explo2", AID.ISLOCALNAME));
 

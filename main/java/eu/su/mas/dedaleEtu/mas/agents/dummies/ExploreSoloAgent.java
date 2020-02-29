@@ -29,7 +29,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	private static final long serialVersionUID = -6431752665590433727L;
 	private MapRepresentation myMap;
 	private boolean moving = true;
-	private List<String> blackList = new ArrayList<String>();
+	private List<String> blackListMap = new ArrayList<String>();
 	private List<String> agentZoneList = new ArrayList<String>();
 	
 
@@ -44,7 +44,8 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 
 		super.setup();
 		
-		//this.myMap = new MapRepresentation();
+		this.blackListMap.add(this.getLocalName());
+		
 
 		List<Behaviour> lb=new ArrayList<Behaviour>();
 		
@@ -79,15 +80,15 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	}
 	
 	public void addAgentBlackList(String agent) {
-		this.blackList.add(agent);
+		this.blackListMap.add(agent);
 	}
 	
 	public void supAgentBlackList(String agent) {
-		this.blackList.remove(agent);
+		this.blackListMap.remove(agent);
 	}
 	
 	public List<String> getAgentBlackList(){
-		return this.blackList;
+		return this.blackListMap;
 	}
 	
 	public void addAgentZoneList(String agent) {
@@ -110,5 +111,6 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	public void setMap(MapRepresentation map) {
 		this.myMap = map;
 	}
+	
 	
 }

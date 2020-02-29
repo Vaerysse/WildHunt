@@ -60,12 +60,11 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 	@Override
 	public void action() {
 
-		if (this.myMap == null) {
+		if (this.myMap == null)
 			System.out.println("Map null");
 			//this.myMap = ((ExploreSoloAgent)this.myAgent).getMap();
 			this.myMap = new MapRepresentation();
 			((ExploreSoloAgent)this.myAgent).setMap(this.myMap);
-		}
 		
 		//0) Retrieve the current position
 		String myPosition = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
@@ -175,20 +174,21 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				/************************************************
 				 * 				END API CALL ILUSTRATION
 				 *************************************************/
-				
+				//is agent move is true
 				if (((ExploreSoloAgent) this.myAgent).isMoving()){
-					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
-					System.out.println("Behaviour test map " + this.myMap);
-					/**
-					 * List<String> listAgentZone = ((ExploreSoloAgent)this.myAgent).getAgentZoneList();
-					 
-					for(int a = 0; a < listAgentZone.size(); a++) {
-						if (((ExploreSoloAgent)this.myAgent).getAgentBlackList().contains(listAgentZone.get(a)) == false){
-							((ExploreSoloAgent)this.myAgent).supAgentBlackList(listAgentZone.get(a));
+					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);//agent move 1 node
+					
+					//Delete from the blackList the agent not present into the ray of communication on the previous node
+					for(int a = 0; a < ((ExploreSoloAgent)this.myAgent).getAgentBlackList().size(); ) {
+						if (!((ExploreSoloAgent)this.myAgent).getAgentZoneList().contains(((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a)) && !((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a).equals(this.myAgent.getLocalName())){
+							((ExploreSoloAgent)this.myAgent).supAgentBlackList(((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a));
+						}
+						else {
+							a++;
 						}
 					}
 					((ExploreSoloAgent)this.myAgent).supAgentZoneList();
-					*/
+					
 				}
 				else {
 					System.out.println("Ho là là, je suis si fatigué!");
