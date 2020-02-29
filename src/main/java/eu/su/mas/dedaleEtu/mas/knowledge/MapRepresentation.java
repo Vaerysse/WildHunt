@@ -92,7 +92,7 @@ public class MapRepresentation implements Serializable {
 	 * @param idNode1 one side of the edge
 	 * @param idNode2 the other side of the edge
 	 */
-	public void addEdge(String idNode1,String idNode2) {
+	public void addEdge(String idNode1, String idNode2) {
 		try {
 			this.nbEdges++;
 			this.g.addEdge(this.nbEdges.toString(), idNode1, idNode2);
@@ -117,6 +117,47 @@ public class MapRepresentation implements Serializable {
 		 *  - si existants, màj de l'attribut si nécessaire
 		 */
 		
+		//for (Edge e: this.g.getEachEdge())
+		
+		//for edge in getEachEdge()
+		
+		/**
+		 * Iterator<Edge> iterE=this.g.edges().iterator();
+		while (iterE.hasNext()){
+			Edge e=iterE.next();
+			Node sn=e.getSourceNode();
+			Node tn=e.getTargetNode();
+			sg.addEdge(e.getId(), sn.getId(), tn.getId());
+		}
+		 */
+		
+		Graph graphToMerge = map.getGraph();
+		 
+		// Adding unknown nodes to the MapRepresentation
+		Iterator<Node> iter = graphToMerge.iterator();
+		while(iter.hasNext()) {
+			Node n = iter.next();
+			if (this.g.getNode(n.getId()) == null) { // node unknown
+				this.addNode(n.getId(), (MapAttribute)n.getAttribute("ui.class"));
+			}
+			else { // node known, just updating the attribute if necessary
+				if (!((MapAttribute)n.getAttribute("ui.class")).equals((MapAttribute)this.g.getNode(n.getId()).getAttribute("ui.class"))) { // update of the attribute
+					this.addNode(n.getId(), (MapAttribute)n.getAttribute("ui.class"));
+				}
+			}
+		}
+		
+		// Adding unknown edges to the MapRepresentation
+		Iterator<Edge> iterE = graphToMerge.edges().iterator();
+		while (iterE.hasNext()) {
+			Edge e = iterE.next();
+			Node sn = e.getSourceNode();
+			Node tn = e.getTargetNode();
+			if (this.g.getEdge(e.getId()) == null) { // unknown edge
+				this.g.addEdge(e.getId(), sn.getId(), tn.getId());
+			}
+		}
+			
 		/**
 		 * QUESTION: on est censé coder la fusion des graphes entièrement à la main ou il existe 
 		 * des méthodes de GraphStream permettant de le faire plus directement ?
@@ -136,6 +177,14 @@ public class MapRepresentation implements Serializable {
 	
 	private Graph getGraph() {
 		return this.g;
+	}
+	
+	public SerializableSimpleGraph<String, MapAttribute> getSG() {
+		return this.sg;
+	}
+	
+	public void setSG(SerializableSimpleGraph<String, MapAttribute> sg) {
+		this.sg = sg;
 	}
 
 	/**
@@ -165,24 +214,27 @@ public class MapRepresentation implements Serializable {
 	/**
 	 * Before the migration we kill all non serializable components and store their data in a serializable form
 	 */
-	public void prepareMigration(){
-		this.sg= new SerializableSimpleGraph<String,MapAttribute>();
-		Iterator<Node> iter=this.g.iterator();
-		while(iter.hasNext()){
-			Node n=iter.next();
-			sg.addNode(n.getId(),(MapAttribute)n.getAttribute("ui.class"));
+	public void prepareMigration() {
+		System.out.println("prepareMigration");
+		this.sg = new SerializableSimpleGraph<String,MapAttribute>();
+		System.out.println("Migration step 1");
+		Iterator<Node> iter = this.g.iterator();
+		while(iter.hasNext()) {
+			Node n = iter.next();
+			sg.addNode(n.getId(), (MapAttribute)n.getAttribute("ui.class"));
 		}
-		Iterator<Edge> iterE=this.g.edges().iterator();
+		System.out.println("nodes OK");
+		Iterator<Edge> iterE = this.g.edges().iterator();
 		while (iterE.hasNext()){
-			Edge e=iterE.next();
-			Node sn=e.getSourceNode();
-			Node tn=e.getTargetNode();
+			Edge e = iterE.next();
+			Node sn = e.getSourceNode();
+			Node tn = e.getTargetNode();
 			sg.addEdge(e.getId(), sn.getId(), tn.getId());
 		}
-
+		System.out.println("edges OK");
 		closeGui();
 
-		this.g=null;
+		this.g = null;
 
 	}
 
@@ -191,16 +243,16 @@ public class MapRepresentation implements Serializable {
 	 */
 	public void loadSavedData(){
 
-		this.g= new SingleGraph("My world vision");
-		this.g.setAttribute("ui.stylesheet",nodeStyle);
+		this.g = new SingleGraph("My world vision");
+		this.g.setAttribute("ui.stylesheet", nodeStyle);
 
 		openGui();
 
-		Integer nbEd=0;
+		Integer nbEd = 0;
 		for (SerializableNode<String, MapAttribute> n: this.sg.getAllNodes()){
 			this.g.addNode(n.getNodeId()).setAttribute("ui.class", n.getNodeContent().toString());
-			for(String s:this.sg.getEdges(n.getNodeId())){
-				this.g.addEdge(nbEd.toString(),n.getNodeId(),s);
+			for(String s : this.sg.getEdges(n.getNodeId())) {
+				this.g.addEdge(nbEd.toString(), n.getNodeId(), s);
 				nbEd++;
 			}
 		}

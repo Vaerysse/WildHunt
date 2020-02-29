@@ -39,14 +39,12 @@ public class ReceiveMessageBehaviour extends SimpleBehaviour{
 		final ACLMessage msg = this.myAgent.receive(msgTemplate);
 		
 		System.out.println("Coucou, tu veux voir ma b.... belle reception de message?");
-		if (msg != null && ((ExploreSoloAgent)this.myAgent).getAgentBlackList().contains(msg.getSender().getLocalName()) == false) {	
+		if (msg != null) {	
 			System.out.println(this.myAgent.getLocalName()+"<----Result received from "+msg.getSender().getLocalName()+" ,content= "+msg.getContent());
-			((ExploreSoloAgent)this.myAgent).addAgentBlackList(msg.getSender().getLocalName());
+			//((ExploreSoloAgent)this.myAgent).addAgentBlackList(msg.getSender().getLocalName());
 			((ExploreSoloAgent)this.myAgent).setMoving(false);
 			this.myAgent.addBehaviour(new PrivateChannelBehaviour(this.myAgent, msg.getSender().getLocalName()));
-			if (((ExploreSoloAgent)this.myAgent).getAgentZoneList().contains(msg.getSender().getLocalName())){
-				((ExploreSoloAgent)this.myAgent).addAgentZoneList(msg.getSender().getLocalName());
-			}
+			
 			//création canal privé
 		}else{
 			block();// the behaviour goes to sleep until the arrival of a new message in the agent's Inbox.

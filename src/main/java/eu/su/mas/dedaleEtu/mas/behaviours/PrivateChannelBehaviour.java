@@ -2,14 +2,17 @@ package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.io.IOException;
 
+import dataStructures.serializableGraph.SerializableSimpleGraph;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
+import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.SimpleBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.lang.acl.UnreadableException;
 
 public class PrivateChannelBehaviour extends SimpleBehaviour{
 
@@ -46,7 +49,7 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 	public PrivateChannelBehaviour(final Agent myagent, String receiverName) {
 		super(myagent);
 		
-		this.myMap =((ExploreSoloAgent)this.myAgent).getMap();
+		this.myMap = ((ExploreSoloAgent)this.myAgent).getMap();
 		this.receiverName = receiverName;
 		this.finished = false;
 		this.connection = true;
@@ -77,6 +80,9 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			msg.setProtocol("ExchangeProtocol");
 			msg.addReceiver(new AID(this.receiverName,AID.ISLOCALNAME));
 			try {
+				System.out.println("Préparation de l'envoi de la map");
+				//((ExploreSoloAgent)this.myAgent).getMap().prepareMigration();
+				this.myMap.prepareMigration();
 				msg.setContentObject(this.myMap);
 			} catch (IOException e) {
 				msg.setContent("-1");
@@ -132,10 +138,38 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			this.exchange = false;
 			this.stepProtocol += 1;
 			this.ACKmap = true;
+			System.out.println(((ExploreSoloAgent)this.myAgent).getMap());
 			if (msgReceived != null) {
+				try {
+					System.out.println(msgReceived.getContentObject());
+				} catch (UnreadableException e1) {
+					// TODO Auto-generated catch block
+					System.out.println("pb print obj");
+					e1.printStackTrace();
+				}
 				if (msgReceived.getContent() == "-1" ) {
 					System.out.println("Map reception problem");
 					this.finished = true;
+				}
+				else {
+					try {
+						MapRepresentation otherMap = new MapRepresentation();
+						System.out.println("1");
+						
+						otherMap.setSG((SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject());
+						System.out.println("2");
+						otherMap.loadSavedData();
+						System.out.println("3");
+						this.myMap.merge(otherMap);
+						System.out.println("4");
+						
+						
+					} catch (UnreadableException e) {
+						// TODO Auto-generated catch block
+						System.out.println("Map reception problem");
+						this.finished = true;
+						e.printStackTrace();
+					}
 				}
 			}
 		}
