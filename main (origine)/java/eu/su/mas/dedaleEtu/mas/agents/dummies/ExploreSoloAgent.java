@@ -6,8 +6,6 @@ import java.util.List;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploSoloBehaviour;
-import eu.su.mas.dedaleEtu.mas.behaviours.ReceiveMessageBehaviour;
-import eu.su.mas.dedaleEtu.mas.behaviours.SayHello;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import jade.core.behaviours.Behaviour;
 
@@ -26,9 +24,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 
 	private static final long serialVersionUID = -6431752665590433727L;
 	private MapRepresentation myMap;
-	private boolean moving = true;
-	private List<String> blackListMap = new ArrayList<String>();
-	private List<String> agentZoneList = new ArrayList<String>();
+	
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -41,8 +37,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 
 		super.setup();
 		
-		this.blackListMap.add(this.getLocalName());
-		
+
 		List<Behaviour> lb=new ArrayList<Behaviour>();
 		
 		/************************************************
@@ -52,8 +47,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		 ************************************************/
 		
 		lb.add(new ExploSoloBehaviour(this,this.myMap));
-		lb.add(new ReceiveMessageBehaviour(this));
-		lb.add(new SayHello(this));
+		
 		
 		/***
 		 * MANDATORY TO ALLOW YOUR AGENT TO BE DEPLOYED CORRECTLY
@@ -66,46 +60,6 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 
 	}
 	
-	public boolean isMoving() {
-		return this.moving;
-	}
-	
-	public void setMoving(boolean value) {
-		this.moving = value;
-	}
-	
-	public void addAgentBlackList(String agent) {
-		this.blackListMap.add(agent);
-	}
-	
-	public void supAgentBlackList(String agent) {
-		this.blackListMap.remove(agent);
-	}
-	
-	public List<String> getAgentBlackList(){
-		return this.blackListMap;
-	}
-	
-	public void addAgentZoneList(String agent) {
-		this.agentZoneList.add(agent);
-	}
-	
-	public void supAgentZoneList() {
-		this.agentZoneList = new ArrayList<String>();
-	}
-	
-	public List<String> getAgentZoneList(){
-		return this.agentZoneList;
-	}
-	
-	public MapRepresentation getMap() {
-		System.out.println("Map es tu là ? " + this.myMap);
-		return this.myMap;
-	}
-	
-	public void setMap(MapRepresentation map) {
-		this.myMap = map;
-	}
 	
 	
 }

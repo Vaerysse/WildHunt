@@ -152,6 +152,7 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 					this.finished = true;
 				}
 				else {
+					
 					try {
 						MapRepresentation otherMap = new MapRepresentation();
 						System.out.println("1");
@@ -170,6 +171,7 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 						this.finished = true;
 						e.printStackTrace();
 					}
+				
 				}
 			}
 		}
