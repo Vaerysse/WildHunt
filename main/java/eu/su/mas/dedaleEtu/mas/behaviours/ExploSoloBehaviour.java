@@ -169,6 +169,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				/************************************************
 				 * 				END API CALL ILUSTRATION
 				 *************************************************/
+				((ExploreSoloAgent)this.myAgent).setMap(this.myMap);
 				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
 			}
 
