@@ -1,7 +1,13 @@
 package eu.su.mas.dedaleEtu.mas.knowledge;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -84,6 +90,7 @@ public class MapRepresentation implements Serializable {
 		}
 		n.clearAttributes();
 		n.setAttribute("ui.class", mapAttribute.toString());
+		System.out.println("map attribut : " + mapAttribute.toString());
 		n.setAttribute("ui.label",id);
 	}
 
@@ -281,4 +288,44 @@ public class MapRepresentation implements Serializable {
 	public void setSG(SerializableSimpleGraph<String, MapAttribute> sg) {
 		this.sg = sg;
 	}
+	
+	/**
+	 * Before the migration we kill all non serializable components and store their data in a serializable form
+	 * @return 
+	 */
+	public HashMap<String, HashMap<String, ArrayList<String>>> prepareSendMap(){
+		// firt key: Attribut name (ex: node, edge etc.)
+		// seconde key : id Attribut (ex for node 1_0 etc.)
+		// value  : String list attribut's (object) Attribut (firt key)
+		HashMap<String, HashMap<String, ArrayList<String>>> serialMap = new HashMap<String, HashMap<String, ArrayList<String>>>();
+		
+		//Nodes
+		Iterator<Node> iter=this.g.iterator();
+		HashMap<String, ArrayList<String>> nodeList = new HashMap<String, ArrayList<String>>();
+		while(iter.hasNext()){
+			Node n=iter.next();
+			ArrayList<String> attributList = new ArrayList<String>();
+			attributList.add(n.getAttribute("ui.class").toString());
+			nodeList.put(n.getId(), attributList);
+		}
+		serialMap.put("Nodes", nodeList);
+		System.out.println(serialMap);
+		
+		//Edges
+		Iterator<Edge> iterE=this.g.edges().iterator();
+		HashMap<String, ArrayList<String>> edgeList = new HashMap<String, ArrayList<String>>();
+		while (iterE.hasNext()){
+			Edge e=iterE.next();
+			ArrayList<String> attributList = new ArrayList<String>();
+			attributList.add(e.getSourceNode().getId());
+			attributList.add(e.getTargetNode().getId());
+			edgeList.put(e.getId(), attributList);
+		}
+		serialMap.put("Edges", edgeList);
+		
+		System.out.println(serialMap);
+		return serialMap;
+
+	}
+	
 }

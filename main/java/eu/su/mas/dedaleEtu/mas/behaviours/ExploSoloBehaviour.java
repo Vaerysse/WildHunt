@@ -64,7 +64,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 			System.out.println("Map null");
 			//this.myMap = ((ExploreSoloAgent)this.myAgent).getMap();
 			this.myMap = new MapRepresentation();
-			//((ExploreSoloAgent)this.myAgent).setMap(this.myMap);
+			((ExploreSoloAgent)this.myAgent).setMap(this.myMap);
 		}
 		
 		//0) Retrieve the current position

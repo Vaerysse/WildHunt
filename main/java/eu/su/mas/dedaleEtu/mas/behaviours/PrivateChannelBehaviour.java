@@ -17,13 +17,14 @@ import jade.lang.acl.UnreadableException;
 public class PrivateChannelBehaviour extends SimpleBehaviour{
 
 	private static final long serialVersionUID = 9088209402507795292L;
+	private static final int wait = 2000;
 	
 	private boolean finished;
 	
 	/**
 	 * To control the incoming communication flow
 	 */
-	private boolean connection, exchange, ACKmap;
+	private boolean connection, exchange, ACKmap, sendConnection, sendMap, sendACKmap;
 	
 	/**
 	 * To control the outgoing communication flow
@@ -40,6 +41,9 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 	 */
 	private MapRepresentation myMap;
 	
+	
+	private long timer;
+	
 	/**
 	 * 
 	 * Private communication channel to exchange information between 2 agents.
@@ -53,9 +57,13 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 		this.receiverName = receiverName;
 		this.finished = false;
 		this.connection = true;
+		this.sendConnection = true;
 		this.exchange = false;
+		this.sendMap = false;
 		this.ACKmap = false;
+		this.sendACKmap = false;
 		this.stepProtocol = 1;
+		this.timer = System.currentTimeMillis();
 		//ajouter un timer pour éviter les attentes à l'infini
 		
 	}
@@ -63,7 +71,7 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 	public void action() {
 		
 		// Sending messages
-		if (this.stepProtocol == 1){
+		if (this.sendConnection){
 			// Sending a message to ask for the opening of a private channel
 			ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 			msg.setSender(this.myAgent.getAID());
@@ -73,7 +81,7 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
 			System.out.println(this.myAgent.getLocalName() + ": I want to open a private channel with " + this.receiverName);
 		}
-		else if (this.stepProtocol == 2) {
+		else if (this.sendMap) {
 			// Sending the map representation
 			ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 			msg.setSender(this.myAgent.getAID());
@@ -82,8 +90,8 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			try {
 				System.out.println("Préparation de l'envoi de la map");
 				//((ExploreSoloAgent)this.myAgent).getMap().prepareMigration();
-				this.myMap.prepareMigration();
-				msg.setContentObject(this.myMap);
+				//this.myMap.prepareMigration();
+				msg.setContentObject(this.myMap.prepareSendMap());
 			} catch (IOException e) {
 				msg.setContent("-1");
 				System.out.println("Map serialization problem");
@@ -92,7 +100,7 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
 			System.out.println(this.myAgent.getLocalName() + ": I've sent my map to " + this.receiverName);
 		}
-		else if (this.stepProtocol == 3) {
+		else if (this.sendACKmap) {
 			// Acknowledging the map reception
 			ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 			msg.setSender(this.myAgent.getAID());
@@ -117,11 +125,18 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 				if (msgReceived.getContent().equals("connection")) {
 					this.connection = false;
 					this.exchange = true;
-					this.stepProtocol += 1;
+					this.sendConnection = false;
+					this.sendMap = true;
 					System.out.println(this.myAgent.getLocalName() + ": I've opened a private channel with " + this.receiverName);
 				}
 				else if (msgReceived.getContent() == "-1" ) {
 					System.out.println(this.myAgent.getLocalName() + ": I have a connection problem with " + this.receiverName);
+					this.finished = true;
+				}
+			}
+			else {
+				if(System.currentTimeMillis() - this.timer >= wait){
+					((ExploreSoloAgent)this.myAgent).setMoving(true);
 					this.finished = true;
 				}
 			}
@@ -138,6 +153,8 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			this.exchange = false;
 			this.stepProtocol += 1;
 			this.ACKmap = true;
+			this.sendACKmap = true;
+			this.sendMap = false;
 			System.out.println(((ExploreSoloAgent)this.myAgent).getMap());
 			if (msgReceived != null) {
 				try {
@@ -174,8 +191,14 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 				
 				}
 			}
+			else {
+				if(System.currentTimeMillis() - this.timer >= wait){
+					((ExploreSoloAgent)this.myAgent).setMoving(true);
+					this.finished = true;
+				}
+			}
 		}
-		else if (this.ACKmap && this.stepProtocol == 3) {
+		else if (this.ACKmap && this.sendACKmap) {
 			// Receiving an ACK for the map reception
 			MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.and(
 										  MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
@@ -191,6 +214,12 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 				}
 				else if (msgReceived.getContent() == "-1" ) {
 					System.out.println("ACK map reception problem");
+				}
+			}
+			else {
+				if(System.currentTimeMillis() - this.timer >= wait){
+					((ExploreSoloAgent)this.myAgent).setMoving(true);
+					this.finished = true;
 				}
 			}
 		}
