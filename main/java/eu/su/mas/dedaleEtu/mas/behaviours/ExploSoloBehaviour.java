@@ -52,24 +52,30 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 
 	public ExploSoloBehaviour(final AbstractDedaleAgent myagent, MapRepresentation myMap) {
 		super(myagent);
-		this.myMap=myMap;
-		this.openNodes=new ArrayList<String>();
-		this.closedNodes=new HashSet<String>();
+		this.myMap = myMap;
+		this.openNodes = new ArrayList<String>();
+		this.closedNodes = new HashSet<String>();
 	}
 
 	@Override
 	public void action() {
 
-		if(this.myMap==null)
-			this.myMap= new MapRepresentation();
+		if (this.myMap == null) {
+			System.out.println("Map null");
+			//this.myMap = ((ExploreSoloAgent)this.myAgent).getMap();
+			this.myMap = new MapRepresentation();
+			//((ExploreSoloAgent)this.myAgent).setMap(this.myMap);
+		}
 		
 		//0) Retrieve the current position
-		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+		String myPosition = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 	
-		if (myPosition!=null){
+		if (myPosition != null){
 			//List of observable from the agent's current position
 			List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
-
+			
+			System.out.println(lobs);
+			
 			/**
 			 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 			 */
@@ -169,8 +175,25 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				/************************************************
 				 * 				END API CALL ILUSTRATION
 				 *************************************************/
-				((ExploreSoloAgent)this.myAgent).setMap(this.myMap);
-				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
+				//is agent move is true
+				if (((ExploreSoloAgent) this.myAgent).isMoving()){
+					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);//agent move 1 node
+					
+					//Delete from the blackList the agent not present into the ray of communication on the previous node
+					for(int a = 0; a < ((ExploreSoloAgent)this.myAgent).getAgentBlackList().size(); ) {
+						if (!((ExploreSoloAgent)this.myAgent).getAgentZoneList().contains(((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a)) && !((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a).equals(this.myAgent.getLocalName())){
+							((ExploreSoloAgent)this.myAgent).supAgentBlackList(((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a));
+						}
+						else {
+							a++;
+						}
+					}
+					((ExploreSoloAgent)this.myAgent).supAgentZoneList();
+					
+				}
+				else {
+					System.out.println("Ho là là, je suis si fatigué!");
+				}
 			}
 
 		}
