@@ -1,6 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 import dataStructures.serializableGraph.SerializableSimpleGraph;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
@@ -173,13 +174,17 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 					try {
 						MapRepresentation otherMap = new MapRepresentation();
 						System.out.println("1");
-						
+						/*
 						otherMap.setSG((SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject());
 						System.out.println("2");
 						otherMap.loadSavedData();
 						System.out.println("3");
 						this.myMap.merge(otherMap);
 						System.out.println("4");
+						*/
+						
+						otherMap.receptionMap((HashMap) msgReceived.getContentObject());
+						
 						
 						
 					} catch (UnreadableException e) {

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
@@ -22,6 +23,7 @@ import org.graphstream.ui.view.Viewer;
 import org.graphstream.ui.view.Viewer.CloseFramePolicy;
 
 import dataStructures.serializableGraph.*;
+import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import javafx.application.Platform;
 
 /**
@@ -309,8 +311,7 @@ public class MapRepresentation implements Serializable {
 			nodeList.put(n.getId(), attributList);
 		}
 		serialMap.put("Nodes", nodeList);
-		System.out.println(serialMap);
-		
+
 		//Edges
 		Iterator<Edge> iterE=this.g.edges().iterator();
 		HashMap<String, ArrayList<String>> edgeList = new HashMap<String, ArrayList<String>>();
@@ -323,9 +324,25 @@ public class MapRepresentation implements Serializable {
 		}
 		serialMap.put("Edges", edgeList);
 		
-		System.out.println(serialMap);
 		return serialMap;
 
+	}
+	
+	public void  receptionMap(HashMap serialMap) {
+		HashMap<String, ArrayList<String>> nodes = (HashMap<String, ArrayList<String>>) serialMap.get("Nodes");
+		//parcourir hashmap node et ajouter chaque node au graphe g
+		Iterator iterN = nodes.keySet().iterator();
+		for(String mapkey : nodes.keySet()) {
+			addNode(mapkey,MapAttribute.valueOf(nodes.get(mapkey).get(0)));
+		}
+		
+		HashMap<String, ArrayList<String>> edges = (HashMap<String, ArrayList<String>>) serialMap.get("Edges");
+		// parcourir hashmap edge et ajouter chaque edge au graphe g
+		Iterator iterE = edges.keySet().iterator();
+		for(String mapkey : edges.keySet()) {
+			null;
+		}
+		
 	}
 	
 }
