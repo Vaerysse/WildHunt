@@ -52,10 +52,10 @@ public class MapRepresentation implements Serializable {
 	 * Parameters for graph rendering
 	 ********************************/
 
-	private String defaultNodeStyle= "node {"+"fill-color: black;"+" size-mode:fit;text-alignment:under; text-size:14;text-color:white;text-background-mode:rounded-box;text-background-color:black;}";
+	private String defaultNodeStyle = "node {"+"fill-color: black;"+" size-mode:fit;text-alignment:under; text-size:14;text-color:white;text-background-mode:rounded-box;text-background-color:black;}";
 	private String nodeStyle_open = "node.agent {"+"fill-color: forestgreen;"+"}";
 	private String nodeStyle_agent = "node.open {"+"fill-color: blue;"+"}";
-	private String nodeStyle=defaultNodeStyle+nodeStyle_agent+nodeStyle_open;
+	private String nodeStyle = defaultNodeStyle+nodeStyle_agent+nodeStyle_open;
 
 	private Graph g; //data structure non serializable
 	private Viewer viewer; //ref to the display,  non serializable
@@ -67,15 +67,15 @@ public class MapRepresentation implements Serializable {
 	public MapRepresentation() {
 		//System.setProperty("org.graphstream.ui.renderer","org.graphstream.ui.j2dviewer.J2DGraphRenderer");
 		System.setProperty("org.graphstream.ui", "javafx");
-		this.g= new SingleGraph("My world vision");
-		this.g.setAttribute("ui.stylesheet",nodeStyle);
+		this.g = new SingleGraph("My world vision");
+		this.g.setAttribute("ui.stylesheet", nodeStyle);
 
 		Platform.runLater(() -> {
 			openGui();
 		});
 		//this.viewer = this.g.display();
 
-		this.nbEdges=0;
+		this.nbEdges = 0;
 	}
 
 	/**
@@ -92,7 +92,7 @@ public class MapRepresentation implements Serializable {
 		}
 		n.clearAttributes();
 		n.setAttribute("ui.class", mapAttribute.toString());
-		System.out.println("map attribut : " + mapAttribute.toString());
+		//System.out.println("map attribut : " + mapAttribute.toString());
 		n.setAttribute("ui.label",id);
 	}
 
@@ -101,7 +101,7 @@ public class MapRepresentation implements Serializable {
 	 * @param idNode1 one side of the edge
 	 * @param idNode2 the other side of the edge
 	 */
-	public void addEdge(String idNode1,String idNode2){
+	public void addEdge(String idNode1, String idNode2){
 		try {
 			this.nbEdges++;
 			this.g.addEdge(this.nbEdges.toString(), idNode1, idNode2);
@@ -206,99 +206,16 @@ public class MapRepresentation implements Serializable {
 		viewer.addDefaultView(true);
 		g.display();
 	}
-	
+		
 	/**
-	 * Merge two MapRepresentation together 
-	 * @param map the MapRepresentation to merge with
+	 * Create a serializable data structure containing all the map data that needs to be sent to another agent
+	 * First key: element type (ex: node, edge etc.)
+	 * Second key: element id (ex: for node 1_0 etc.)
+	 * Value: String list attribute's (object) Attribute (first key) NANI?
+	 * @return the data structure that needs to be sent
 	 */
-	public void merge(MapRepresentation map) {
+	public HashMap<String, HashMap<String, ArrayList<String>>> prepareSendMap() {
 		
-		// TODO
-		/**
-		 * parcourir tous les edges et les ajouter
-		 * parcourir tous les noeuds et :
-		 * 	- les ajouter si inexistants
-		 *  - si existants, màj de l'attribut si nécessaire
-		 */
-		
-		//for (Edge e: this.g.getEachEdge())
-		
-		//for edge in getEachEdge()
-		
-		/**
-		 * Iterator<Edge> iterE=this.g.edges().iterator();
-		while (iterE.hasNext()){
-			Edge e=iterE.next();
-			Node sn=e.getSourceNode();
-			Node tn=e.getTargetNode();
-			sg.addEdge(e.getId(), sn.getId(), tn.getId());
-		}
-		 */
-		
-		Graph graphToMerge = map.getGraph();
-		 
-		// Adding unknown nodes to the MapRepresentation
-		Iterator<Node> iter = graphToMerge.iterator();
-		while(iter.hasNext()) {
-			Node n = iter.next();
-			if (this.g.getNode(n.getId()) == null) { // node unknown
-				this.addNode(n.getId(), (MapAttribute)n.getAttribute("ui.class"));
-			}
-			else { // node known, just updating the attribute if necessary
-				if (!((MapAttribute)n.getAttribute("ui.class")).equals((MapAttribute)this.g.getNode(n.getId()).getAttribute("ui.class"))) { // update of the attribute
-					this.addNode(n.getId(), (MapAttribute)n.getAttribute("ui.class"));
-				}
-			}
-		}
-		
-		// Adding unknown edges to the MapRepresentation
-		Iterator<Edge> iterE = graphToMerge.edges().iterator();
-		while (iterE.hasNext()) {
-			Edge e = iterE.next();
-			Node sn = e.getSourceNode();
-			Node tn = e.getTargetNode();
-			if (this.g.getEdge(e.getId()) == null) { // unknown edge
-				this.g.addEdge(e.getId(), sn.getId(), tn.getId());
-			}
-		}
-			
-		/**
-		 * QUESTION: on est censé coder la fusion des graphes entièrement à la main ou il existe 
-		 * des méthodes de GraphStream permettant de le faire plus directement ?
-		 * Parce que je n'arrive pas à faire fontionner les méthodes merge et mergeIn (qui
-		 * appartiennent à l'import org.graphstream.graph.implementations.Graphs)
-		 * Quelle est la différence entre org.graphstream.graph.implementations.Graphs et org.graphstream.Graph ?
-		 */
-		
-		//mergeIn(this.g, map.getGraph());
-		
-		/**
-		 * AUTRE QUESTION: est-ce qu'on a le droit de stocker tout ce qu'on veut dans les agents ?
-		 * Par exemple utiliser une horloge scalaire/vectorielle...
-		 */
-		
-	}
-	
-	private Graph getGraph() {
-		return this.g;
-	}
-	
-	public SerializableSimpleGraph<String, MapAttribute> getSG() {
-		return this.sg;
-	}
-	
-	public void setSG(SerializableSimpleGraph<String, MapAttribute> sg) {
-		this.sg = sg;
-	}
-	
-	/**
-	 * Before the migration we kill all non serializable components and store their data in a serializable form
-	 * @return 
-	 */
-	public HashMap<String, HashMap<String, ArrayList<String>>> prepareSendMap(){
-		// firt key: Attribut name (ex: node, edge etc.)
-		// seconde key : id Attribut (ex for node 1_0 etc.)
-		// value  : String list attribut's (object) Attribut (firt key)
 		HashMap<String, HashMap<String, ArrayList<String>>> serialMap = new HashMap<String, HashMap<String, ArrayList<String>>>();
 		
 		//Nodes
@@ -325,9 +242,69 @@ public class MapRepresentation implements Serializable {
 		serialMap.put("Edges", edgeList);
 		
 		return serialMap;
-
 	}
 	
+	/**
+	 * Add new map data to the MapRepresentation
+	 * @param mapData the new map data to merge into the MapRepresentation
+	 */
+	public void mergeMapData(HashMap<String, HashMap<String, ArrayList<String>>> mapData) {
+		
+		// Adding unknown nodes to the MapRepresentation
+		HashMap<String, ArrayList<String>> nodes = (HashMap<String, ArrayList<String>>) mapData.get("Nodes");
+		for(String nodeID : nodes.keySet()) {
+			if (this.g.getNode(nodeID) == null) { // node unknown
+				addNode(nodeID, MapAttribute.valueOf(nodes.get(nodeID).get(0)));
+			}
+			else { // node known, just updating the open/closed attribute if necessary
+				// TODO: voir comment traiter le cas si MapAttribute = agent (pb de datation de l'info)
+				// Et à déplacer potentiellement dans addNode pour éviter un double check d'existence du noeud
+				if ((nodes.get(nodeID).get(0).equals("closed")) && 
+						(this.g.getNode(nodeID).getAttribute("ui.class").toString().equals("open"))) {
+					addNode(nodeID, MapAttribute.valueOf(nodes.get(nodeID).get(0)));
+				}
+			}
+		}
+		
+		// Adding unknown edges to the MapRepresentation
+		HashMap<String, ArrayList<String>> edges = (HashMap<String, ArrayList<String>>) mapData.get("Edges");
+		for(String edgeID : edges.keySet()) {
+			addEdge(edges.get(edgeID).get(0), edges.get(edgeID).get(1)); // addEge checks himself if the edge already exist
+		}
+		
+		System.out.println("MAP MERGED");
+		
+		/*
+				
+		Graph graphToMerge = map.getGraph();
+		 
+		// Adding unknown nodes to the MapRepresentation
+		Iterator<Node> iter = graphToMerge.iterator();
+		while(iter.hasNext()) {
+			Node n = iter.next();
+			if (this.g.getNode(n.getId()) == null) { // node unknown
+				this.addNode(n.getId(), (MapAttribute)n.getAttribute("ui.class"));
+			}
+			else { // node known, just updating the attribute if necessary
+				if (!((MapAttribute)n.getAttribute("ui.class")).equals((MapAttribute)this.g.getNode(n.getId()).getAttribute("ui.class"))) { // update of the attribute
+					this.addNode(n.getId(), (MapAttribute)n.getAttribute("ui.class"));
+				}
+			}
+		}
+		
+		// Adding unknown edges to the MapRepresentation
+		Iterator<Edge> iterE = graphToMerge.edges().iterator();
+		while (iterE.hasNext()) {
+			Edge e = iterE.next();
+			Node sn = e.getSourceNode();
+			Node tn = e.getTargetNode();
+			if (this.g.getEdge(e.getId()) == null) { // unknown edge
+				this.g.addEdge(e.getId(), sn.getId(), tn.getId());
+			}
+		}*/
+	}
+	
+	/*
 	public void  receptionMap(HashMap serialMap) {
 		HashMap<String, ArrayList<String>> nodes = (HashMap<String, ArrayList<String>>) serialMap.get("Nodes");
 		//parcourir hashmap node et ajouter chaque node au graphe g
@@ -344,5 +321,6 @@ public class MapRepresentation implements Serializable {
 		}
 		
 	}
+	*/
 	
 }

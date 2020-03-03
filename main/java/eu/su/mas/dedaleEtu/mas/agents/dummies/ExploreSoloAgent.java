@@ -62,7 +62,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		
 		addBehaviour(new startMyBehaviours(this,lb));
 		
-		System.out.println("the  agent "+this.getLocalName()+ " is started");
+		System.out.println("the agent "+this.getLocalName()+ " is started");
 
 	}
 	
@@ -99,7 +99,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	}
 	
 	public MapRepresentation getMap() {
-		System.out.println("Map es tu là ? " + this.myMap);
+		System.out.println(this.getLocalName() + " - Map es tu là ? " + this.myMap);
 		return this.myMap;
 	}
 	

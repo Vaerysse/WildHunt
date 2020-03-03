@@ -1,6 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import dataStructures.serializableGraph.SerializableSimpleGraph;
@@ -90,8 +91,6 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			msg.addReceiver(new AID(this.receiverName,AID.ISLOCALNAME));
 			try {
 				System.out.println("Préparation de l'envoi de la map");
-				//((ExploreSoloAgent)this.myAgent).getMap().prepareMigration();
-				//this.myMap.prepareMigration();
 				msg.setContentObject(this.myMap.prepareSendMap());
 			} catch (IOException e) {
 				msg.setContent("-1");
@@ -156,8 +155,25 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			this.ACKmap = true;
 			this.sendACKmap = true;
 			this.sendMap = false;
-			System.out.println(((ExploreSoloAgent)this.myAgent).getMap());
+			
+			// TODO: ligne debug pr print Map es-tu là ?
+			((ExploreSoloAgent)this.myAgent).getMap();
+			
 			if (msgReceived != null) {
+				if (msgReceived.getContent() == "-1" ) {
+					System.out.println(this.myAgent.getLocalName() + " - MAP RECEPTION PROBLEM");
+					this.finished = true;
+				}
+				else {
+					try {
+						this.myMap.mergeMapData((HashMap<String, HashMap<String, ArrayList<String>>>) msgReceived.getContentObject());
+					} catch (UnreadableException e) {
+						System.out.println(this.myAgent.getLocalName() + " - MAP RECEPTION PROBLEM");
+						e.printStackTrace();
+						this.finished = true;
+					}
+				
+				/*
 				try {
 					System.out.println(msgReceived.getContentObject());
 				} catch (UnreadableException e1) {
@@ -170,29 +186,18 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 					this.finished = true;
 				}
 				else {
-					
+
 					try {
 						MapRepresentation otherMap = new MapRepresentation();
-						System.out.println("1");
-						/*
-						otherMap.setSG((SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject());
-						System.out.println("2");
-						otherMap.loadSavedData();
-						System.out.println("3");
-						this.myMap.merge(otherMap);
-						System.out.println("4");
-						*/
-						
+						System.out.println("1");					
 						otherMap.receptionMap((HashMap) msgReceived.getContentObject());
-						
-						
-						
+
 					} catch (UnreadableException e) {
-						// TODO Auto-generated catch block
 						System.out.println("Map reception problem");
 						this.finished = true;
 						e.printStackTrace();
 					}
+					*/
 				
 				}
 			}
