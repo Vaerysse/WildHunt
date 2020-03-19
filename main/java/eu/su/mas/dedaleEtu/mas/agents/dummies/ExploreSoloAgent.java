@@ -29,6 +29,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	private boolean moving = true;
 	private List<String> blackListMap = new ArrayList<String>();
 	private List<String> agentZoneList = new ArrayList<String>();
+	private long startDate = System.currentTimeMillis();
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.

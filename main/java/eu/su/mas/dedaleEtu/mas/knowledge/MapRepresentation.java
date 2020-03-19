@@ -83,7 +83,7 @@ public class MapRepresentation implements Serializable {
 	 * @param id Id of the node
 	 * @param mapAttribute associated state of the node
 	 */
-	public void addNode(String id,MapAttribute mapAttribute){
+	public void addNode(String id,MapAttribute mapAttribute, float time){
 		Node n;
 		if (this.g.getNode(id)==null){
 			n=this.g.addNode(id);
@@ -94,6 +94,7 @@ public class MapRepresentation implements Serializable {
 		n.setAttribute("ui.class", mapAttribute.toString());
 		//System.out.println("map attribut : " + mapAttribute.toString());
 		n.setAttribute("ui.label",id);
+		n.setAttribute("lastVisited", time);
 	}
 
 	/**
@@ -225,6 +226,7 @@ public class MapRepresentation implements Serializable {
 			Node n=iter.next();
 			ArrayList<String> attributList = new ArrayList<String>();
 			attributList.add(n.getAttribute("ui.class").toString());
+			attributList.add(n.getAttribute("lastVisited").toString());
 			nodeList.put(n.getId(), attributList);
 		}
 		serialMap.put("Nodes", nodeList);
@@ -254,14 +256,14 @@ public class MapRepresentation implements Serializable {
 		HashMap<String, ArrayList<String>> nodes = (HashMap<String, ArrayList<String>>) mapData.get("Nodes");
 		for(String nodeID : nodes.keySet()) {
 			if (this.g.getNode(nodeID) == null) { // node unknown
-				addNode(nodeID, MapAttribute.valueOf(nodes.get(nodeID).get(0)));
+				addNode(nodeID, MapAttribute.valueOf(nodes.get(nodeID).get(0)), Float.parseFloat(nodes.get(nodeID).get(1)));
 			}
 			else { // node known, just updating the open/closed attribute if necessary
 				// TODO: voir comment traiter le cas si MapAttribute = agent (pb de datation de l'info)
 				// Et à déplacer potentiellement dans addNode pour éviter un double check d'existence du noeud
 				if ((nodes.get(nodeID).get(0).equals("closed")) && 
 						(this.g.getNode(nodeID).getAttribute("ui.class").toString().equals("open"))) {
-					addNode(nodeID, MapAttribute.valueOf(nodes.get(nodeID).get(0)));
+					addNode(nodeID, MapAttribute.valueOf(nodes.get(nodeID).get(0)), Float.parseFloat(nodes.get(nodeID).get(1)));
 				}
 			}
 		}

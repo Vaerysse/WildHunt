@@ -87,7 +87,7 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			// Sending the map representation
 			ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 			msg.setSender(this.myAgent.getAID());
-			msg.setProtocol("ExchangeProtocol");
+			msg.setProtocol("MapProtocol");
 			msg.addReceiver(new AID(this.receiverName,AID.ISLOCALNAME));
 			try {
 				System.out.println("Préparation de l'envoi de la map");
@@ -146,7 +146,7 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.and(
 										  MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 										  MessageTemplate.MatchSender(new AID(this.receiverName, AID.ISLOCALNAME))),
-										  MessageTemplate.MatchProtocol("ExchangeProtocol"));			
+										  MessageTemplate.MatchProtocol("MapProtocol"));			
 
 			ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
 			System.out.println(this.myAgent.getLocalName() + ": I've received a map from " + this.receiverName);
@@ -166,6 +166,7 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 				}
 				else {
 					try {
+						System.out.println(msgReceived.getContentObject());
 						this.myMap.mergeMapData((HashMap<String, HashMap<String, ArrayList<String>>>) msgReceived.getContentObject());
 					} catch (UnreadableException e) {
 						System.out.println(this.myAgent.getLocalName() + " - MAP RECEPTION PROBLEM");
