@@ -38,7 +38,7 @@ public class ReceiveMessageBehaviour extends SimpleBehaviour{
 
 		final ACLMessage msg = this.myAgent.receive(msgTemplate);
 		
-		System.out.println("Coucou, tu veux voir ma b.... belle reception de message?");
+		//System.out.println("Coucou, tu veux voir ma b.... belle reception de message?");
 		
 		//2)if msg no null
 		if (msg != null){

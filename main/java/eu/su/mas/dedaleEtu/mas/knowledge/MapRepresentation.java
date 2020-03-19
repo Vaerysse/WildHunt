@@ -83,7 +83,7 @@ public class MapRepresentation implements Serializable {
 	 * @param id Id of the node
 	 * @param mapAttribute associated state of the node
 	 */
-	public void addNode(String id,MapAttribute mapAttribute, float time){
+	public void addNode(String id,MapAttribute mapAttribute, long time){
 		Node n;
 		if (this.g.getNode(id)==null){
 			n=this.g.addNode(id);
@@ -134,6 +134,7 @@ public class MapRepresentation implements Serializable {
 		}
 		dijkstra.clear();
 		shortestPath.remove(0);//remove the current position
+		System.out.println("envoyer par getShortmachin : " + shortestPath);
 		return shortestPath;
 	}
 
@@ -256,14 +257,19 @@ public class MapRepresentation implements Serializable {
 		HashMap<String, ArrayList<String>> nodes = (HashMap<String, ArrayList<String>>) mapData.get("Nodes");
 		for(String nodeID : nodes.keySet()) {
 			if (this.g.getNode(nodeID) == null) { // node unknown
-				addNode(nodeID, MapAttribute.valueOf(nodes.get(nodeID).get(0)), Float.parseFloat(nodes.get(nodeID).get(1)));
+				addNode(nodeID, MapAttribute.valueOf(nodes.get(nodeID).get(0)), Long.parseLong(nodes.get(nodeID).get(1)));
 			}
 			else { // node known, just updating the open/closed attribute if necessary
 				// TODO: voir comment traiter le cas si MapAttribute = agent (pb de datation de l'info)
 				// Et à déplacer potentiellement dans addNode pour éviter un double check d'existence du noeud
-				if ((nodes.get(nodeID).get(0).equals("closed")) && 
-						(this.g.getNode(nodeID).getAttribute("ui.class").toString().equals("open"))) {
-					addNode(nodeID, MapAttribute.valueOf(nodes.get(nodeID).get(0)), Float.parseFloat(nodes.get(nodeID).get(1)));
+				if ((nodes.get(nodeID).get(0).equals("closed")) && (this.g.getNode(nodeID).getAttribute("ui.class").toString().equals("open"))) {
+					//si le time du noeud envoyé et plus récent
+					if (Long.parseLong(nodes.get(nodeID).get(1)) < Long.parseLong(this.g.getNode(nodeID).getAttribute("lastVisited").toString())) {
+						addNode(nodeID, MapAttribute.valueOf(nodes.get(nodeID).get(0)), Long.parseLong(nodes.get(nodeID).get(1)));
+					}
+					else {
+						
+					}
 				}
 			}
 		}
@@ -275,54 +281,59 @@ public class MapRepresentation implements Serializable {
 		}
 		
 		System.out.println("MAP MERGED");
-		
-		/*
-				
-		Graph graphToMerge = map.getGraph();
-		 
-		// Adding unknown nodes to the MapRepresentation
-		Iterator<Node> iter = graphToMerge.iterator();
-		while(iter.hasNext()) {
-			Node n = iter.next();
-			if (this.g.getNode(n.getId()) == null) { // node unknown
-				this.addNode(n.getId(), (MapAttribute)n.getAttribute("ui.class"));
+	
+	}
+	
+	
+	/**
+	 * Retourne le noeud ayant la plus grande valeur (visite la plus ancienne)
+	 * @param nodeStart noeud ou se trouve l'agent
+	 */
+	public List<String> bestReward(String nodeStart) {
+		List<String> bestNode = new ArrayList<String>();
+		bestNode.add(nodeStart);
+		long bestValue = System.currentTimeMillis();
+		Iterator<Node> iter=this.g.iterator();
+		//cherche le/les noeuds à la plus haute valeur
+		while(iter.hasNext()){
+			Node n=iter.next();
+			System.out.println("bestNode : " + bestNode);
+			System.out.println("bestValue : " + bestValue + ", valueNode : " + Long.parseLong(n.getAttribute("lastVisited").toString()));
+			if (bestValue > Long.parseLong(n.getAttribute("lastVisited").toString())) {
+				System.out.println("ok nouvelle valeur valeur pour bestValue");
+				bestValue = Long.parseLong(n.getAttribute("lastVisited").toString());
+				bestNode = new ArrayList<String>();
+				bestNode.add(n.getId());
 			}
-			else { // node known, just updating the attribute if necessary
-				if (!((MapAttribute)n.getAttribute("ui.class")).equals((MapAttribute)this.g.getNode(n.getId()).getAttribute("ui.class"))) { // update of the attribute
-					this.addNode(n.getId(), (MapAttribute)n.getAttribute("ui.class"));
+			else if (bestValue == Long.parseLong(n.getAttribute("lastVisited").toString())) {
+				System.out.println("valeur egale pour bestValue");
+				bestNode.add(n.getId());
+			}
+		}
+		List<String> bestPath = this.getShortestPath(nodeStart,bestNode.get(0));
+		System.out.println("bestPath avant comparaison : " + bestPath);
+		for(int i = 1; i<bestNode.size(); i++) {
+			List<String> pathTemp = this.getShortestPath(nodeStart,bestNode.get(i));
+			System.out.println("pathTemp : " + pathTemp);
+			if(pathTemp.size() < bestPath.size()) {
+				bestPath = pathTemp;
+			}
+			else if(pathTemp.size() == bestPath.size()) {
+				long valuePathTemp = 0;
+				long valueBestPath = 0;
+				for (int j=0; j<pathTemp.size(); j++) {
+					valuePathTemp = valuePathTemp + Long.parseLong(this.g.getNode(pathTemp.get(j)).getAttribute("lastVisited").toString());
+				}
+				for (int j=0; j<bestPath.size(); j++) {
+					valueBestPath = valueBestPath + Long.parseLong(this.g.getNode(pathTemp.get(j)).getAttribute("lastVisited").toString());
+				}
+				if(valueBestPath < valuePathTemp) {
+					bestPath = pathTemp;
 				}
 			}
 		}
-		
-		// Adding unknown edges to the MapRepresentation
-		Iterator<Edge> iterE = graphToMerge.edges().iterator();
-		while (iterE.hasNext()) {
-			Edge e = iterE.next();
-			Node sn = e.getSourceNode();
-			Node tn = e.getTargetNode();
-			if (this.g.getEdge(e.getId()) == null) { // unknown edge
-				this.g.addEdge(e.getId(), sn.getId(), tn.getId());
-			}
-		}*/
+		System.out.println("bestPath avant envoie : " + bestPath);
+		return bestPath;
 	}
-	
-	/*
-	public void  receptionMap(HashMap serialMap) {
-		HashMap<String, ArrayList<String>> nodes = (HashMap<String, ArrayList<String>>) serialMap.get("Nodes");
-		//parcourir hashmap node et ajouter chaque node au graphe g
-		Iterator iterN = nodes.keySet().iterator();
-		for(String mapkey : nodes.keySet()) {
-			addNode(mapkey,MapAttribute.valueOf(nodes.get(mapkey).get(0)));
-		}
-		
-		HashMap<String, ArrayList<String>> edges = (HashMap<String, ArrayList<String>>) serialMap.get("Edges");
-		// parcourir hashmap edge et ajouter chaque edge au graphe g
-		Iterator iterE = edges.keySet().iterator();
-		for(String mapkey : edges.keySet()) {
-			null;
-		}
-		
-	}
-	*/
 	
 }

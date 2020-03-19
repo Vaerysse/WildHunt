@@ -74,7 +74,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 			//List of observable from the agent's current position
 			List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
 			
-			System.out.println(lobs);
+			System.out.println(this.myAgent.getLocalName() + " : " +lobs);
 			
 			/**
 			 * Just added here to let you see what the agent is doing, otherwise he will be too quick
@@ -99,8 +99,8 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				if (!this.closedNodes.contains(nodeId)){
 					if (!this.openNodes.contains(nodeId)){
 						this.openNodes.add(nodeId);
-						this.myMap.addNode(nodeId, MapAttribute.open, System.currentTimeMillis());
-						this.myMap.addEdge(myPosition, nodeId);	
+						this.myMap.addNode(nodeId, MapAttribute.open, ((ExploreSoloAgent)this.myAgent).getStartDate());
+						this.myMap.addEdge(myPosition, nodeId);
 					}else{
 						//the node exist, but not necessarily the edge
 						this.myMap.addEdge(myPosition, nodeId);

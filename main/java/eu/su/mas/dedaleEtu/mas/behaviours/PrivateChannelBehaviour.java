@@ -90,7 +90,6 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			msg.setProtocol("MapProtocol");
 			msg.addReceiver(new AID(this.receiverName,AID.ISLOCALNAME));
 			try {
-				System.out.println("Préparation de l'envoi de la map");
 				msg.setContentObject(this.myMap.prepareSendMap());
 			} catch (IOException e) {
 				msg.setContent("-1");
@@ -119,7 +118,7 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 										  MessageTemplate.MatchSender(new AID(this.receiverName, AID.ISLOCALNAME))),
 										  MessageTemplate.MatchProtocol("ExchangeProtocol"));			
 			ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
-			System.out.println("En attente de récéption message de demande de com priver");
+			//System.out.println("En attente de récéption message de demande de com priver");
 			if (msgReceived != null) {
 				System.out.println(this.myAgent.getLocalName() + ": I've received a request for a private channel from " + this.receiverName);
 				if (msgReceived.getContent().equals("connection")) {
@@ -166,7 +165,6 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 				}
 				else {
 					try {
-						System.out.println(msgReceived.getContentObject());
 						this.myMap.mergeMapData((HashMap<String, HashMap<String, ArrayList<String>>>) msgReceived.getContentObject());
 					} catch (UnreadableException e) {
 						System.out.println(this.myAgent.getLocalName() + " - MAP RECEPTION PROBLEM");
@@ -202,6 +200,7 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 					*/
 				
 				}
+				((ExploreSoloAgent)this.myAgent).setNeedObj(true);
 			}
 			else {
 				if(System.currentTimeMillis() - this.timer >= wait){

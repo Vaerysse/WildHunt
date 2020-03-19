@@ -30,6 +30,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	private List<String> blackListMap = new ArrayList<String>();
 	private List<String> agentZoneList = new ArrayList<String>();
 	private long startDate = System.currentTimeMillis();
+	private boolean needObj = true;
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -100,7 +101,6 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	}
 	
 	public MapRepresentation getMap() {
-		System.out.println(this.getLocalName() + " - Map es tu là ? " + this.myMap);
 		return this.myMap;
 	}
 	
@@ -108,5 +108,16 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		this.myMap = map;
 	}
 	
+	public long getStartDate() {
+		return startDate;
+	}
+	
+	public boolean getNeedObj() {
+		return this.needObj;
+	}
+	
+	public void setNeedObj(boolean bool) {
+		this.needObj = bool;
+	}
 	
 }
