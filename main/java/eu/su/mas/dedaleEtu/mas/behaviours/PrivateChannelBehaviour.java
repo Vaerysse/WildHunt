@@ -169,6 +169,7 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 						this.myMap.mergeMapData((HashMap<String, HashMap<String, ArrayList<String>>>) msgReceived.getContentObject());
 					} catch (UnreadableException e) {
 						System.out.println(this.myAgent.getLocalName() + " - MAP RECEPTION PROBLEM");
+						System.out.println(this.myAgent.getLocalName() + "dans l'ouverture de map");
 						e.printStackTrace();
 						this.finished = true;
 					}

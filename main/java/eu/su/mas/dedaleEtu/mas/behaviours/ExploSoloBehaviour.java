@@ -112,6 +112,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 			//3) while openNodes is not empty, continues.
 			if (this.openNodes.isEmpty()){
 				//Explo finished
+				this.myAgent.addBehaviour(new PatrolSoloBehaviour(((ExploreSoloAgent)this.myAgent), this.myMap));
 				finished=true;
 				System.out.println("Exploration successufully done, behaviour removed.");
 			}else{
