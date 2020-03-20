@@ -49,8 +49,9 @@ public class ReceiveMessageBehaviour extends SimpleBehaviour{
 			// verification sender name is not in agentBlackList
 			if (((ExploreSoloAgent)this.myAgent).getAgentBlackList().contains(msg.getSender().getLocalName()) == false) {	
 				System.out.println(this.myAgent.getLocalName()+"<----Result received from "+msg.getSender().getLocalName()+" ,content= "+msg.getContent());
+				((ExploreSoloAgent)this.myAgent).addAgentPosittionList(msg.getContent());
 				//add sender name in agentBlackList
-				((ExploreSoloAgent)this.myAgent).addAgentBlackList(msg.getSender().getLocalName());
+				//((ExploreSoloAgent)this.myAgent).addAgentBlackList(msg.getSender().getLocalName());
 				//Stop the move
 				((ExploreSoloAgent)this.myAgent).setMoving(false);
 				//Open the private communication between this agent and sender agent

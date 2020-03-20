@@ -29,6 +29,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	private boolean moving = true;
 	private List<String> blackListMap = new ArrayList<String>();
 	private List<String> agentZoneList = new ArrayList<String>();
+	private List<String> agentPositionList = new ArrayList<String>();
 	private long startDate = System.currentTimeMillis();
 	private boolean needObj = true;
 
@@ -120,4 +121,15 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		this.needObj = bool;
 	}
 	
+	public void cleanAgentPositionList() {
+		this.agentPositionList = new ArrayList<String>();
+	}
+	
+	public List<String> getAgentPositionList(){
+		return this.agentPositionList;
+	}
+	
+	public void addAgentPosittionList(String pos) {
+		this.agentPositionList.add(pos);
+	}
 }

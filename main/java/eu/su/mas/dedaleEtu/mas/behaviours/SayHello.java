@@ -1,6 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
+import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.TickerBehaviour;
@@ -38,8 +39,9 @@ public class SayHello extends TickerBehaviour{
 		msg.setProtocol("UselessProtocol");
 
 		if (myPosition!=""){
+			((ExploreSoloAgent)this.myAgent).cleanAgentPositionList();
 			System.out.println("Agent "+this.myAgent.getLocalName()+ " is trying to reach its friends");
-			msg.setContent("Hello World, I'm at "+myPosition);
+			msg.setContent(myPosition);
 
 			msg.addReceiver(new AID("Explo1",AID.ISLOCALNAME));
 			msg.addReceiver(new AID("Explo2",AID.ISLOCALNAME));

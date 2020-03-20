@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
@@ -22,7 +23,7 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 	private static final long serialVersionUID = 1L;
 	private MapRepresentation myMap;
 	private boolean finished = false;
-	private List<String> bestPath;
+	private String bestPath;
 	private int step;
 	
 	public PatrolSoloBehaviour(final ExploreSoloAgent myAgent, MapRepresentation myMap) {
@@ -46,7 +47,6 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 		if (myPosition != null){
 			//List of observable from the agent's current position
 			List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
-			
 			System.out.println(this.myAgent.getLocalName() + " : " +lobs);
 			
 			/**
@@ -63,36 +63,27 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 			this.myMap.addNode(myPosition,MapAttribute.closed, System.currentTimeMillis());
 
 			//2) calcule objectif et chemin (si besoin)
-			if (((ExploreSoloAgent)this.myAgent).getNeedObj()) {
-				this.bestPath= this.myMap.bestReward(myPosition);
-				System.out.println("New objectif : " + this.bestPath);
-				((ExploreSoloAgent)this.myAgent).setNeedObj(false);
-				this.step = 0;
-			}
+			this.bestPath= this.myMap.bestReward(lobs);
+			//System.out.println("New objectif : " + this.bestPath);
+
 
 
 			//3) move
 			//is agent move is true
 			if (((ExploreSoloAgent) this.myAgent).isMoving()){
 				//si l'agent n'est pas a destination
-				if(this.bestPath.get(this.step) != myPosition){
-					System.out.println(this.myAgent.getLocalName() + " my position : " + myPosition + ", je doit aller en : " + this.bestPath.get(this.step));
-					((AbstractDedaleAgent)this.myAgent).moveTo(this.bestPath.get(this.step));//agent move 1 node
-					//évite que le this.step cree une sortie d'indice de tableau
-					if((step + 1) < this.bestPath.size()) {
-						this.step++;
-					}
-				}	
-				
-				//si apres le mouvement l'agent eest arrivé à destination, alor on calcule une nouvelle destination
-				System.out.println("step : " + this.step);
-				System.out.println(this.bestPath.get(this.step) + " : " + ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
-				if(this.bestPath.get(this.step).equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())){
-					System.out.println("demande de new obj");
-					((ExploreSoloAgent)this.myAgent).setNeedObj(true);
+				//System.out.println(this.myAgent.getLocalName() + " my position : " + myPosition + ", je doit aller en : " + this.bestPath);
+				((AbstractDedaleAgent)this.myAgent).moveTo(this.bestPath);//agent move 1 node
+				//si agent bloqué
+				if(myPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
+					Random rand = new Random();
+					int nb = rand.nextInt(lobs.size());
+					//System.out.println(this.myAgent.getLocalName() + " moveTo : " + lobs.get(nb).getLeft());						
+					((AbstractDedaleAgent)this.myAgent).moveTo(lobs.get(nb).getLeft().toString());
 				}
+			}	
 
-				
+				/**
 				//Delete from the blackList the agent not present into the ray of communication on the previous node
 				for(int a = 0; a < ((ExploreSoloAgent)this.myAgent).getAgentBlackList().size(); ) {
 					if (!((ExploreSoloAgent)this.myAgent).getAgentZoneList().contains(((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a)) && !((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a).equals(this.myAgent.getLocalName())){
@@ -103,8 +94,7 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 					}
 				}
 				((ExploreSoloAgent)this.myAgent).supAgentZoneList();
-					
-			}
+				**/
 			else {
 				System.out.println("Ho là là, je suis si fatigué!");
 			}

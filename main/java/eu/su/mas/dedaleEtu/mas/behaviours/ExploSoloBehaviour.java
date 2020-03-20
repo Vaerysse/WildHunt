@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import dataStructures.tuple.Couple;
@@ -179,7 +180,14 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				//is agent move is true
 				if (((ExploreSoloAgent) this.myAgent).isMoving()){
 					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);//agent move 1 node
-					
+					//si agent bloqué
+					if(myPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
+						Random rand = new Random();
+						int nb = rand.nextInt(lobs.size());
+						//System.out.println(this.myAgent.getLocalName() + " moveTo : " + lobs.get(nb).getLeft());						
+						((AbstractDedaleAgent)this.myAgent).moveTo(lobs.get(nb).getLeft().toString());
+					}
+					/**
 					//Delete from the blackList the agent not present into the ray of communication on the previous node
 					for(int a = 0; a < ((ExploreSoloAgent)this.myAgent).getAgentBlackList().size(); ) {
 						if (!((ExploreSoloAgent)this.myAgent).getAgentZoneList().contains(((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a)) && !((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a).equals(this.myAgent.getLocalName())){
@@ -190,6 +198,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 						}
 					}
 					((ExploreSoloAgent)this.myAgent).supAgentZoneList();
+					**/
 					
 				}
 				else {

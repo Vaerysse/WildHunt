@@ -23,6 +23,8 @@ import org.graphstream.ui.view.Viewer;
 import org.graphstream.ui.view.Viewer.CloseFramePolicy;
 
 import dataStructures.serializableGraph.*;
+import dataStructures.tuple.Couple;
+import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import javafx.application.Platform;
 
@@ -134,7 +136,7 @@ public class MapRepresentation implements Serializable {
 		}
 		dijkstra.clear();
 		shortestPath.remove(0);//remove the current position
-		System.out.println("envoyer par getShortmachin : " + shortestPath);
+		//System.out.println("envoyer par getShortmachin : " + shortestPath);
 		return shortestPath;
 	}
 
@@ -289,7 +291,8 @@ public class MapRepresentation implements Serializable {
 	 * Retourne le noeud ayant la plus grande valeur (visite la plus ancienne)
 	 * @param nodeStart noeud ou se trouve l'agent
 	 */
-	public List<String> bestReward(String nodeStart) {
+	/**
+	public List<String> bestReward2(String nodeStart) {
 		List<String> bestNode = new ArrayList<String>();
 		bestNode.add(nodeStart);
 		long bestValue = System.currentTimeMillis();
@@ -297,24 +300,24 @@ public class MapRepresentation implements Serializable {
 		//cherche le/les noeuds à la plus haute valeur
 		while(iter.hasNext()){
 			Node n=iter.next();
-			System.out.println("bestNode : " + bestNode);
-			System.out.println("bestValue : " + bestValue + ", valueNode : " + Long.parseLong(n.getAttribute("lastVisited").toString()));
+			//System.out.println("bestNode : " + bestNode);
+			//System.out.println("bestValue : " + bestValue + ", valueNode : " + Long.parseLong(n.getAttribute("lastVisited").toString()));
 			if (bestValue > Long.parseLong(n.getAttribute("lastVisited").toString())) {
-				System.out.println("ok nouvelle valeur valeur pour bestValue");
+				//System.out.println("ok nouvelle valeur valeur pour bestValue");
 				bestValue = Long.parseLong(n.getAttribute("lastVisited").toString());
 				bestNode = new ArrayList<String>();
 				bestNode.add(n.getId());
 			}
 			else if (bestValue == Long.parseLong(n.getAttribute("lastVisited").toString())) {
-				System.out.println("valeur egale pour bestValue");
+				//System.out.println("valeur egale pour bestValue");
 				bestNode.add(n.getId());
 			}
 		}
 		List<String> bestPath = this.getShortestPath(nodeStart,bestNode.get(0));
-		System.out.println("bestPath avant comparaison : " + bestPath);
+		//System.out.println("bestPath avant comparaison : " + bestPath);
 		for(int i = 1; i<bestNode.size(); i++) {
 			List<String> pathTemp = this.getShortestPath(nodeStart,bestNode.get(i));
-			System.out.println("pathTemp : " + pathTemp);
+			//System.out.println("pathTemp : " + pathTemp);
 			if(pathTemp.size() < bestPath.size()) {
 				bestPath = pathTemp;
 			}
@@ -332,8 +335,29 @@ public class MapRepresentation implements Serializable {
 				}
 			}
 		}
-		System.out.println("bestPath avant envoie : " + bestPath);
+		//System.out.println("bestPath avant envoie : " + bestPath);
 		return bestPath;
 	}
+	**/
+	
+	/**
+	 * Determine le noeud voisin ayant la plus basse valeur (la date de visite la plus vielle)
+	 * @param obs list contenant l'obseervation de l'agent
+	 * @return l'id du noeud ayant la plus basse valeur
+	 */
+	public String bestReward(List<Couple<String,List<Couple<Observation,Integer>>>> obs) {
+		long bestValue = System.currentTimeMillis();
+		String bestNode = obs.get(0).getLeft();
+		for(int i = 1; i<obs.size(); i++) {
+			System.out.println(Long.parseLong(this.g.getNode(obs.get(i).getLeft()).getAttribute("lastVisited").toString()));
+			if(bestValue > Long.parseLong(this.g.getNode(obs.get(i).getLeft()).getAttribute("lastVisited").toString())) {
+				System.out.println("ok valide meilleur : " + Long.parseLong(this.g.getNode(obs.get(i).getLeft()).getAttribute("lastVisited").toString()));
+				bestValue = Long.parseLong(this.g.getNode(obs.get(i).getLeft()).getAttribute("lastVisited").toString());
+				bestNode = obs.get(i).getLeft();
+			}
+		}
+		return bestNode;
+	}
+	
 	
 }
