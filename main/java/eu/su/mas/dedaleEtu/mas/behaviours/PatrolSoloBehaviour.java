@@ -82,11 +82,11 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 					// je met a jour le noeud pour dire que je le sent
 					System.out.println("J'attend les ordres!!!");
 					System.out.println("je sent");
-					this.myMap.setGolemDetection(ID_node, true);
+					this.myMap.setGolemDetection(ID_node, true, myPosition);
 				}
 				else {
 					System.out.println("je ne le sent pas");
-					this.myMap.setGolemDetection(ID_node, false);
+					this.myMap.setGolemDetection(ID_node, false, myPosition);
 				}
 			}
 			//3) si j'ai sentie un golem
