@@ -42,6 +42,9 @@ public class ReceiveMessageBehaviour extends SimpleBehaviour{
 		
 		//2)if msg no null
 		if (msg != null){
+			// add position agent in node
+			((ExploreSoloAgent)this.myAgent).getMap().addOtherAgentPosition(msg.getSender().getLocalName(), msg.getContent());
+			
 			//add sender agent in AgentZoneList
 			if (!((ExploreSoloAgent)this.myAgent).getAgentZoneList().contains(msg.getSender().getLocalName())){
 				((ExploreSoloAgent)this.myAgent).addAgentZoneList(msg.getSender().getLocalName());

@@ -90,7 +90,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 			this.closedNodes.add(myPosition);
 			this.openNodes.remove(myPosition);
 
-			this.myMap.addNode(myPosition,MapAttribute.closed, System.currentTimeMillis());
+			this.myMap.addNode(myPosition,MapAttribute.closed, System.currentTimeMillis(), "-1", false, 0.0); //attention 4éme argument actuellement a false car pas de detection de golme actuel
 
 			//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
 			String nextNode=null;
@@ -100,7 +100,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				if (!this.closedNodes.contains(nodeId)){
 					if (!this.openNodes.contains(nodeId)){
 						this.openNodes.add(nodeId);
-						this.myMap.addNode(nodeId, MapAttribute.open, ((ExploreSoloAgent)this.myAgent).getStartDate());
+						this.myMap.addNode(nodeId, MapAttribute.open, ((ExploreSoloAgent)this.myAgent).getStartDate(), "-1", false, 0.0);
 						this.myMap.addEdge(myPosition, nodeId);
 					}else{
 						//the node exist, but not necessarily the edge
@@ -179,6 +179,8 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				 *************************************************/
 				//is agent move is true
 				if (((ExploreSoloAgent) this.myAgent).isMoving()){
+					//on enregistre le dernier noeud où on été avant dde bouger
+					((ExploreSoloAgent)this.myAgent).setLastVisitedNode(myPosition);
 					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);//agent move 1 node
 					//si agent bloqué
 					if(myPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {

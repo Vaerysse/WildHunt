@@ -57,46 +57,79 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-
+			
 			//1) remove the current node from openlist and add it to closedNodes.
 
-			this.myMap.addNode(myPosition,MapAttribute.closed, System.currentTimeMillis());
+			this.myMap.addNode(myPosition,MapAttribute.closed, System.currentTimeMillis(), "-1", false, 0.0); //attention 4éme argument actuellement a false car pas de detection de golme actuel
 
-			//2) calcule objectif et chemin (si besoin)
-			this.bestPath= this.myMap.bestReward(lobs);
-			//System.out.println("New objectif : " + this.bestPath);
-
-
-
-			//3) move
-			//is agent move is true
-			if (((ExploreSoloAgent) this.myAgent).isMoving()){
-				//si l'agent n'est pas a destination
-				//System.out.println(this.myAgent.getLocalName() + " my position : " + myPosition + ", je doit aller en : " + this.bestPath);
-				((AbstractDedaleAgent)this.myAgent).moveTo(this.bestPath);//agent move 1 node
-				//si agent bloqué
-				if(myPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
-					Random rand = new Random();
-					int nb = rand.nextInt(lobs.size());
-					//System.out.println(this.myAgent.getLocalName() + " moveTo : " + lobs.get(nb).getLeft());						
-					((AbstractDedaleAgent)this.myAgent).moveTo(lobs.get(nb).getLeft().toString());
+			
+			/**
+			 * JE REGARDE SI JE SENT UN GOLEM ET REAGIT EN CONSEQUENCE
+			 */
+			//2) je regarde si je sent un golem
+			boolean Golem_Present = false;
+			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
+			while(iter.hasNext()){
+				Couple<String, List<Couple<Observation, Integer>>> temp = iter.next();
+				List<Couple<Observation, Integer>> couple=temp.getRight();
+				String ID_node=temp.getLeft();
+				System.out.println("id , couple");
+				System.out.println(ID_node);
+				System.out.println(couple);
+				//si je sent le golem
+				if(couple.size() > 0) {
+					Golem_Present = true;
+					// je met a jour le noeud pour dire que je le sent
+					System.out.println("J'attend les ordres!!!");
+					System.out.println("je sent");
+					this.myMap.setGolemDetection(ID_node, true);
 				}
-			}	
-
-				/**
-				//Delete from the blackList the agent not present into the ray of communication on the previous node
-				for(int a = 0; a < ((ExploreSoloAgent)this.myAgent).getAgentBlackList().size(); ) {
-					if (!((ExploreSoloAgent)this.myAgent).getAgentZoneList().contains(((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a)) && !((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a).equals(this.myAgent.getLocalName())){
-						((ExploreSoloAgent)this.myAgent).supAgentBlackList(((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a));
-					}
-					else {
-						a++;
-					}
+				else {
+					System.out.println("je ne le sent pas");
+					this.myMap.setGolemDetection(ID_node, false);
 				}
-				((ExploreSoloAgent)this.myAgent).supAgentZoneList();
-				**/
-			else {
-				System.out.println("Ho là là, je suis si fatigué!");
+			}
+			//3) si j'ai sentie un golem
+			if(Golem_Present) {
+				//JE LANCE LA PROCEDURE DDE CALITION + ATTRAPAGE DE GOLEM MOUHAHAHAHAHA
+			}
+			else{//3) sinon calcule objectif et chemin (si besoin)
+				this.bestPath= this.myMap.bestReward(lobs);
+				//System.out.println("New objectif : " + this.bestPath);
+
+
+				//4) move
+				//is agent move is true
+				if (((ExploreSoloAgent) this.myAgent).isMoving()){
+					//on enregistre le dernier noeud où on été avant dde bouger
+					((ExploreSoloAgent)this.myAgent).setLastVisitedNode(myPosition);
+					//si l'agent n'est pas a destination
+					//System.out.println(this.myAgent.getLocalName() + " my position : " + myPosition + ", je doit aller en : " + this.bestPath);
+					((AbstractDedaleAgent)this.myAgent).moveTo(this.bestPath);//agent move 1 node
+					//si agent bloqué
+					if(myPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
+						Random rand = new Random();
+						int nb = rand.nextInt(lobs.size());
+						//System.out.println(this.myAgent.getLocalName() + " moveTo : " + lobs.get(nb).getLeft());						
+						((AbstractDedaleAgent)this.myAgent).moveTo(lobs.get(nb).getLeft().toString());
+					}
+				}	
+
+					/**
+					//Delete from the blackList the agent not present into the ray of communication on the previous node
+					for(int a = 0; a < ((ExploreSoloAgent)this.myAgent).getAgentBlackList().size(); ) {
+						if (!((ExploreSoloAgent)this.myAgent).getAgentZoneList().contains(((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a)) && !((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a).equals(this.myAgent.getLocalName())){
+							((ExploreSoloAgent)this.myAgent).supAgentBlackList(((ExploreSoloAgent)this.myAgent).getAgentBlackList().get(a));
+						}
+						else {
+							a++;
+						}
+					}
+					((ExploreSoloAgent)this.myAgent).supAgentZoneList();
+					 **/
+				else {
+					System.out.println("Ho là là, je suis si fatigué!");
+				}
 			}
 		}
 	}

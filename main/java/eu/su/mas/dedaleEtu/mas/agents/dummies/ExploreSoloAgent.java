@@ -32,6 +32,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	private List<String> agentPositionList = new ArrayList<String>();
 	private long startDate = System.currentTimeMillis();
 	private boolean needObj = true;
+	private String lastVisitedNode = "";
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -131,5 +132,13 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	
 	public void addAgentPosittionList(String pos) {
 		this.agentPositionList.add(pos);
+	}
+	
+	public void setLastVisitedNode(String ID_node) {
+		this.lastVisitedNode = ID_node;
+	}
+	
+	public String getLastVisitedNode() {
+		return this.lastVisitedNode;
 	}
 }

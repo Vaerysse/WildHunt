@@ -25,6 +25,7 @@ import org.graphstream.ui.view.Viewer.CloseFramePolicy;
 import dataStructures.serializableGraph.*;
 import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
+import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import javafx.application.Platform;
 
@@ -85,7 +86,7 @@ public class MapRepresentation implements Serializable {
 	 * @param id Id of the node
 	 * @param mapAttribute associated state of the node
 	 */
-	public void addNode(String id,MapAttribute mapAttribute, long time){
+	public void addNode(String id, MapAttribute mapAttribute, long time_visited, String ID_agent, boolean present, double proba_golem){
 		Node n;
 		if (this.g.getNode(id)==null){
 			n=this.g.addNode(id);
@@ -95,8 +96,11 @@ public class MapRepresentation implements Serializable {
 		n.clearAttributes();
 		n.setAttribute("ui.class", mapAttribute.toString());
 		//System.out.println("map attribut : " + mapAttribute.toString());
-		n.setAttribute("ui.label",id);
-		n.setAttribute("lastVisited", time);
+		n.setAttribute("ui.label",id); //id node
+		n.setAttribute("lastVisited", time_visited); // the last time for visited the node
+		n.setAttribute("agent_present", ID_agent); // ID agent -1 if not agent
+		n.setAttribute("golem_scent", present); // true or false
+		n.setAttribute("proba_golem_present", proba_golem); // present probability of golem
 	}
 
 	/**
@@ -230,6 +234,9 @@ public class MapRepresentation implements Serializable {
 			ArrayList<String> attributList = new ArrayList<String>();
 			attributList.add(n.getAttribute("ui.class").toString());
 			attributList.add(n.getAttribute("lastVisited").toString());
+			attributList.add(n.getAttribute("agent_present").toString());
+			attributList.add(n.getAttribute("golem_scent").toString());
+			attributList.add(n.getAttribute("proba_golem_present").toString());
 			nodeList.put(n.getId(), attributList);
 		}
 		serialMap.put("Nodes", nodeList);
@@ -257,9 +264,10 @@ public class MapRepresentation implements Serializable {
 		
 		// Adding unknown nodes to the MapRepresentation
 		HashMap<String, ArrayList<String>> nodes = (HashMap<String, ArrayList<String>>) mapData.get("Nodes");
+		System.out.println(nodes);
 		for(String nodeID : nodes.keySet()) {
 			if (this.g.getNode(nodeID) == null) { // node unknown
-				addNode(nodeID, MapAttribute.valueOf(nodes.get(nodeID).get(0)), Long.parseLong(nodes.get(nodeID).get(1)));
+				addNode(nodeID, MapAttribute.valueOf(nodes.get(nodeID).get(0)), Long.parseLong(nodes.get(nodeID).get(1)), nodes.get(nodeID).get(2), Boolean.parseBoolean(nodes.get(nodeID).get(3)), Double.parseDouble(nodes.get(nodeID).get(4)));
 			}
 			else { // node known, just updating the open/closed attribute if necessary
 				// TODO: voir comment traiter le cas si MapAttribute = agent (pb de datation de l'info)
@@ -267,7 +275,7 @@ public class MapRepresentation implements Serializable {
 				if ((nodes.get(nodeID).get(0).equals("closed")) && (this.g.getNode(nodeID).getAttribute("ui.class").toString().equals("open"))) {
 					//si le time du noeud envoyé et plus récent
 					if (Long.parseLong(nodes.get(nodeID).get(1)) < Long.parseLong(this.g.getNode(nodeID).getAttribute("lastVisited").toString())) {
-						addNode(nodeID, MapAttribute.valueOf(nodes.get(nodeID).get(0)), Long.parseLong(nodes.get(nodeID).get(1)));
+						addNode(nodeID, MapAttribute.valueOf(nodes.get(nodeID).get(0)), Long.parseLong(nodes.get(nodeID).get(1)), nodes.get(nodeID).get(2), Boolean.parseBoolean(nodes.get(nodeID).get(3)), Double.parseDouble(nodes.get(nodeID).get(4)));
 					}
 					else {
 						
@@ -278,6 +286,7 @@ public class MapRepresentation implements Serializable {
 		
 		// Adding unknown edges to the MapRepresentation
 		HashMap<String, ArrayList<String>> edges = (HashMap<String, ArrayList<String>>) mapData.get("Edges");
+		System.out.println(edges);
 		for(String edgeID : edges.keySet()) {
 			addEdge(edges.get(edgeID).get(0), edges.get(edgeID).get(1)); // addEge checks himself if the edge already exist
 		}
@@ -342,16 +351,16 @@ public class MapRepresentation implements Serializable {
 	
 	/**
 	 * Determine le noeud voisin ayant la plus basse valeur (la date de visite la plus vielle)
-	 * @param obs list contenant l'obseervation de l'agent
+	 * @param obs list contenant l'observation de l'agent
 	 * @return l'id du noeud ayant la plus basse valeur
 	 */
 	public String bestReward(List<Couple<String,List<Couple<Observation,Integer>>>> obs) {
 		long bestValue = System.currentTimeMillis();
 		String bestNode = obs.get(0).getLeft();
 		for(int i = 1; i<obs.size(); i++) {
-			System.out.println(Long.parseLong(this.g.getNode(obs.get(i).getLeft()).getAttribute("lastVisited").toString()));
+			//System.out.println(Long.parseLong(this.g.getNode(obs.get(i).getLeft()).getAttribute("lastVisited").toString()));
 			if(bestValue > Long.parseLong(this.g.getNode(obs.get(i).getLeft()).getAttribute("lastVisited").toString())) {
-				System.out.println("ok valide meilleur : " + Long.parseLong(this.g.getNode(obs.get(i).getLeft()).getAttribute("lastVisited").toString()));
+				//System.out.println("ok valide meilleur : " + Long.parseLong(this.g.getNode(obs.get(i).getLeft()).getAttribute("lastVisited").toString()));
 				bestValue = Long.parseLong(this.g.getNode(obs.get(i).getLeft()).getAttribute("lastVisited").toString());
 				bestNode = obs.get(i).getLeft();
 			}
@@ -359,5 +368,52 @@ public class MapRepresentation implements Serializable {
 		return bestNode;
 	}
 	
+	public void addOtherAgentPosition(String Id_agent, String ID_node){
+		//if node is not exit
+		if (this.g.getNode(ID_node)==null){
+			this.addNode(ID_node,MapAttribute.open, System.currentTimeMillis(), Id_agent, false, 0.0);
+		}
+		else {
+			//delete agent present in other node
+			Iterator<Node> iter=this.g.iterator();
+			HashMap<String, ArrayList<String>> nodeList = new HashMap<String, ArrayList<String>>();
+			while(iter.hasNext()){
+				Node n=iter.next();
+				if (n.getAttribute("agent_present").equals(Id_agent)) {
+					n.setAttribute("agent_present", -1);
+				}
+			}
+			// Update agent present
+			this.g.getNode(ID_node).setAttribute("agent_present", Id_agent);
+		}
+	}
+	
+	public void sentGolem(boolean sent, String ID_current_node, String ID_Last_node_visited, List<Couple<String,List<Couple<Observation,Integer>>>> lobs) {
+		//liste des noeuds autour du noeud courant
+		List<String> node_arround = new ArrayList<String>();
+		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
+		while(iter.hasNext()){
+			node_arround.add(iter.next().getLeft());
+		}
+		double pourcent = 0.0;
+		//si on sent un golem sur le noeud courant
+		if(sent) {
+			// si la liste est supérieur à deux (car on enléve le noeud courant et le noeud d'ou on vient
+			if(node_arround.size() > 2) {
+				pourcent = 100/(node_arround.size()-2);
+			}		
+		}
+		//on met a jour les proba de trouver un golem sur les noeuds alentour
+		for(String n : node_arround) {
+			if(!n.equals(ID_Last_node_visited) && !n.equals(ID_current_node)){
+				this.g.getNode(n).setAttribute("proba_golem_present", pourcent);
+			}
+		}
+		
+	}
+	
+	public void setGolemDetection(String ID_node, boolean sent) {
+		this.g.getNode(ID_node).setAttribute("golem_scent", sent);
+	}
 	
 }
