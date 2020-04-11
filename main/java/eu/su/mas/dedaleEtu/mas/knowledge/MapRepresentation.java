@@ -388,52 +388,32 @@ public class MapRepresentation implements Serializable {
 		}
 	}
 	
-	public void sentGolem(String ID_node, String myPosition) {
-		//liste des noeuds autour du noeud ou l'on sent
+	public void sentGolem(boolean sent, String ID_current_node, String ID_Last_node_visited, List<Couple<String,List<Couple<Observation,Integer>>>> lobs) {
+		//liste des noeuds autour du noeud courant
 		List<String> node_arround = new ArrayList<String>();
-		
-		/**
-		 * CHERCHER LES NOEUDS VOISINS A ID_node ET LES AJOUTER A node_arround
-		 */
-		
-		
-		double pourcent = 0.0;
-		// si la liste est supérieur à deux (car on enléve le noeud courant et le noeud d'ou on vient
-		if(ID_node.equals(myPosition)) {
-			if(node_arround.size() > 0) {					
-				pourcent = 100/(node_arround.size());
-			}	
+		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
+		while(iter.hasNext()){
+			node_arround.add(iter.next().getLeft());
 		}
-		else {				
-			if(node_arround.size() > 1) {
-				pourcent = 100/(node_arround.size()-1);
-			}	
-		}		
+		double pourcent = 0.0;
+		//si on sent un golem sur le noeud courant
+		if(sent) {
+			// si la liste est supérieur à deux (car on enléve le noeud courant et le noeud d'ou on vient
+			if(node_arround.size() > 2) {
+				pourcent = 100/(node_arround.size()-2);
+			}		
+		}
 		//on met a jour les proba de trouver un golem sur les noeuds alentour
 		for(String n : node_arround) {
-			if(!n.equals(myPosition) && !n.equals(ID_node)){
-				this.g.getNode(n).setAttribute("proba_golem_present", (Double) this.g.getNode(n).getAttribute("proba_golem_present") + pourcent);
+			if(!n.equals(ID_Last_node_visited) && !n.equals(ID_current_node)){
+				this.g.getNode(n).setAttribute("proba_golem_present", pourcent);
 			}
 		}
 		
 	}
 	
-	public void setGolemDetection(String ID_node, boolean sent, String myPosition) {
+	public void setGolemDetection(String ID_node, boolean sent) {
 		this.g.getNode(ID_node).setAttribute("golem_scent", sent);
-		if(!sent) {
-			//si je ne sent rien sur ma position
-			if(ID_node.contentEquals(myPosition)) {
-				this.g.getNode(ID_node).setAttribute("proba_golem_present", 0.0);
-			}
-		}
-		else {
-			//si la senteur est sur ma position pas possible qu'il y ai le golem
-			if(ID_node.contentEquals(myPosition)) {
-				this.g.getNode(ID_node).setAttribute("proba_golem_present", 0.0);
-			}
-			//sinon calcule de proba
-			this.sentGolem(ID_node, myPosition);
-		}
 	}
 	
 }
