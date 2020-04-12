@@ -64,35 +64,34 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 
 			
 			/**
-			 * JE REGARDE SI JE SENS UN GOLEM ET REAGIS EN CONSEQUENCE
+			 * JE REGARDE SI JE SENT UN GOLEM ET REAGIT EN CONSEQUENCE
 			 */
-			//2) je regarde si je sens un golem
+			//2) je regarde si je sent un golem
 			boolean Golem_Present = false;
-			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter = lobs.iterator();
+			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
 			while(iter.hasNext()){
 				Couple<String, List<Couple<Observation, Integer>>> temp = iter.next();
-				List<Couple<Observation, Integer>> couple = temp.getRight();
-				String ID_node = temp.getLeft();
+				List<Couple<Observation, Integer>> couple=temp.getRight();
+				String ID_node=temp.getLeft();
 				System.out.println("id , couple");
 				System.out.println(ID_node);
 				System.out.println(couple);
-				//si je sens le golem
+				//si je sent le golem
 				if(couple.size() > 0) {
 					Golem_Present = true;
-					// je mets à jour le noeud pour dire que je le sens
-					System.out.println("J'attends les ordres!!!");
-					System.out.println("je sens");
-					this.myMap.setGolemDetection(ID_node, true);
+					// je met a jour le noeud pour dire que je le sent
+					System.out.println("J'attend les ordres!!!");
+					System.out.println("je sent");
+					this.myMap.setGolemDetection(ID_node, true, myPosition);
 				}
 				else {
 					System.out.println("je ne le sent pas");
-					this.myMap.setGolemDetection(ID_node, false);
+					this.myMap.setGolemDetection(ID_node, false, myPosition);
 				}
 			}
-			//3) si j'ai senti un golem
+			//3) si j'ai sentie un golem
 			if(Golem_Present) {
-				//JE LANCE LA PROCEDURE DE COALITION + ATTRAPAGE DE GOLEM MOUHAHAHAHAHA
-				this.myAgent.addBehaviour(new SayGolem(((ExploreSoloAgent)this.myAgent), myPosition));
+				//JE LANCE LA PROCEDURE DDE CALITION + ATTRAPAGE DE GOLEM MOUHAHAHAHAHA
 			}
 			else{//3) sinon calcule objectif et chemin (si besoin)
 				this.bestPath= this.myMap.bestReward(lobs);
