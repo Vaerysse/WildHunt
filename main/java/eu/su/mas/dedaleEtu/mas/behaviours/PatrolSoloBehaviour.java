@@ -14,6 +14,7 @@ import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import jade.core.Agent;
 import jade.core.behaviours.SimpleBehaviour;
+import eu.su.mas.dedaleEtu.princ.Coalition;
 
 public class PatrolSoloBehaviour extends SimpleBehaviour{
 
@@ -47,7 +48,7 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 		if (myPosition != null){
 			//List of observable from the agent's current position
 			List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
-			System.out.println(this.myAgent.getLocalName() + " : " +lobs);
+			//System.out.println(this.myAgent.getLocalName() + " : " +lobs);
 			
 			/**
 			 * Just added here to let you see what the agent is doing, otherwise he will be too quick
@@ -64,44 +65,54 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 			this.myMap.resetPourcentGolem();//nouveau tour du behaviour donc l'agent et le golem se sont peut êtré déplacer, il faut remettre le pourcentage des golems à 0
 			
 			/**
-			 * JE REGARDE SI JE SENT UN GOLEM ET REAGIT EN CONSEQUENCE
+			 * JE REGARDE SI JE SENS UN GOLEM ET REAGIS EN CONSEQUENCE
 			 */
-			//2) je regarde si je sent un golem
+			//2) je regarde si je sens un golem
 			boolean Golem_Present = false;
-			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
+			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter = lobs.iterator();
 			while(iter.hasNext()){
 				Couple<String, List<Couple<Observation, Integer>>> temp = iter.next();
-				List<Couple<Observation, Integer>> couple=temp.getRight();
-				String ID_node=temp.getLeft();
-				System.out.println("id , couple");
-				System.out.println(ID_node);
-				System.out.println(couple);
-				//si je sent le golem
+				List<Couple<Observation, Integer>> couple = temp.getRight();
+				String ID_node = temp.getLeft();
+				//System.out.println("id, couple");
+				//System.out.println(ID_node);
+				//System.out.println(couple);
+				//si je sens le golem
 				if(couple.size() > 0) {
 					Golem_Present = true;
-					// je met a jour le noeud pour dire que je le sent
-					System.out.println("J'attend les ordres!!!");
-					System.out.println("je sent");
+					// je mets a jour le noeud pour dire que je le sens
+					//System.out.println("J'attends les ordres !!!");
+					//System.out.println("je sens");
 					this.myMap.setGolemDetection(ID_node, true, myPosition);
 				}
 				else {
-					System.out.println("je ne le sent pas");
+					//System.out.println("je ne le sens pas");
 					this.myMap.setGolemDetection(ID_node, false, myPosition);
 				}
 			}
-			//3) si j'ai sentie un golem
+			//3) si j'ai senti un golem
 			if(Golem_Present) {
-				//JE LANCE LA PROCEDURE DDE CALITION + ATTRAPAGE DE GOLEM MOUHAHAHAHAHA
+				if (!((ExploreSoloAgent)this.myAgent).isInPursuit()) { // si je ne suis pas déjà entrain de poursuivre un golem
+					//JE LANCE LA PROCEDURE DE COALITION + ATTRAPAGE DE GOLEM MOUHAHAHAHAHA
+					System.out.println("GOLEM - " + this.myAgent.getLocalName());
+					Coalition coal = new Coalition((ExploreSoloAgent)this.myAgent);
+					this.myAgent.addBehaviour(new SayGolem(((ExploreSoloAgent)this.myAgent), myPosition));
+					((ExploreSoloAgent)this.myAgent).setInPursuit(true);
+				}
+				else {
+					System.out.println("Je poursuis déjà - " + this.myAgent.getLocalName());
+				}
+				
 			}
 			else{//3) sinon calcule objectif et chemin (si besoin)
-				this.bestPath= this.myMap.bestReward(lobs);
+				this.bestPath = this.myMap.bestReward(lobs);
 				//System.out.println("New objectif : " + this.bestPath);
 
 
 				//4) move
 				//is agent move is true
 				if (((ExploreSoloAgent) this.myAgent).isMoving()){
-					//on enregistre le dernier noeud où on été avant dde bouger
+					//on enregistre le dernier noeud où on était avant de bouger
 					((ExploreSoloAgent)this.myAgent).setLastVisitedNode(myPosition);
 					//si l'agent n'est pas a destination
 					//System.out.println(this.myAgent.getLocalName() + " my position : " + myPosition + ", je doit aller en : " + this.bestPath);
@@ -128,7 +139,7 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 					((ExploreSoloAgent)this.myAgent).supAgentZoneList();
 					 **/
 				else {
-					System.out.println("Ho là là, je suis si fatigué!");
+					//System.out.println("Ho là là, je suis si fatigué!");
 				}
 			}
 		}
@@ -139,5 +150,7 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 	public boolean done() {
 		return finished;
 	}
+	
+	
 
 }

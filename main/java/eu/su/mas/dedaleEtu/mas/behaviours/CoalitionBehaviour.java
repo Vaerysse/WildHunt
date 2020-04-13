@@ -1,6 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -17,11 +18,12 @@ import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 
 public class CoalitionBehaviour extends SimpleBehaviour{
-
-	private static final long serialVersionUID = 9088209402507795292L;
+	
+	private static final long serialVersionUID = 2L;
+	private boolean finished;
+	
 	private static final int wait = 2000;
 	
-	private boolean finished;
 	
 	/**
 	 * To control the incoming communication flow
@@ -41,21 +43,15 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	/**
 	 * Current knowledge of the agent regarding the environment
 	 */
-	private MapRepresentation myMap;
+	//private MapRepresentation myMap;
 	
 	
 	private long timer;
 	
-	/**
-	 * 
-	 * Private communication channel to exchange information between 2 agents.
-	 * @param myagent
-	 * @param receiverName The local name of the agent myagent tries to communicate with
-	 */
 	public CoalitionBehaviour(final Agent myagent, String receiverName) {
 		super(myagent);
 		
-		this.myMap = ((ExploreSoloAgent)this.myAgent).getMap();
+		//this.myMap = ((ExploreSoloAgent)this.myAgent).getMap();
 		this.receiverName = receiverName;
 		this.finished = false;
 		this.connection = true;
@@ -66,11 +62,17 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		this.sendConfirmation = false;
 		this.stepProtocol = 1;
 		this.timer = System.currentTimeMillis();
-		//ajouter un timer pour éviter les attentes à l'infini
-		
 	}
 	
+	@Override
 	public void action() {
+		
+		/** TODO pour moi faut déjà différencier 2 cas, je fait déjà partie d'une coalition donc j'ignore le message
+		*je ne fait pas partie d'une coalition
+		*pui ensuite, je sent aussi un golem ou bien je ne sent pas
+		*dans les deux cas je demande a rentrer en présisent si oui ou non je sen un golem (plus de chance d'être pris si jamais plusieurs candidat)
+		*/
+		
 		
 		// Sending messages
 		if (this.sendProposal){
@@ -117,111 +119,14 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
 			System.out.println(this.myAgent.getLocalName() + ": I've sent a map ACK to " + this.receiverName);
 		}
-
-		/*
-		// Receiving messages
-		if (this.connection) {
-			// Receiving a request for the opening of a private channel
-			MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.and(
-										  MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
-										  MessageTemplate.MatchSender(new AID(this.receiverName, AID.ISLOCALNAME))),
-										  MessageTemplate.MatchProtocol("ExchangeProtocol"));			
-			ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
-			System.out.println("En attente de récéption message de demande de com priver");
-			if (msgReceived != null) {
-				System.out.println(this.myAgent.getLocalName() + ": I've received a request for a private channel from " + this.receiverName);
-				if (msgReceived.getContent().equals("connection")) {
-					this.connection = false;
-					this.exchange = true;
-					this.sendConnection = false;
-					this.sendMap = true;
-					System.out.println(this.myAgent.getLocalName() + ": I've opened a private channel with " + this.receiverName);
-				}
-				else if (msgReceived.getContent() == "-1" ) {
-					System.out.println(this.myAgent.getLocalName() + ": I have a connection problem with " + this.receiverName);
-					this.finished = true;
-				}
-			}
-			else {
-				if(System.currentTimeMillis() - this.timer >= wait){
-					((ExploreSoloAgent)this.myAgent).setMoving(true);
-					this.finished = true;
-				}
-			}
-		}
-		else if (this.exchange) {
-			// Receiving a map representation
-			MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.and(
-										  MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
-										  MessageTemplate.MatchSender(new AID(this.receiverName, AID.ISLOCALNAME))),
-										  MessageTemplate.MatchProtocol("MapProtocol"));			
-
-			ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
-			System.out.println(this.myAgent.getLocalName() + ": I've received a map from " + this.receiverName);
-			this.exchange = false;
-			this.stepProtocol += 1;
-			this.ACKmap = true;
-			this.sendACKmap = true;
-			this.sendMap = false;
-			
-			// TODO: ligne debug pr print Map es-tu là ?
-			((ExploreSoloAgent)this.myAgent).getMap();
-			
-			if (msgReceived != null) {
-				if (msgReceived.getContent() == "-1" ) {
-					System.out.println(this.myAgent.getLocalName() + " - MAP RECEPTION PROBLEM");
-					this.finished = true;
-				}
-				else {
-					try {
-						System.out.println(msgReceived.getContentObject());
-						this.myMap.mergeMapData((HashMap<String, HashMap<String, ArrayList<String>>>) msgReceived.getContentObject());
-					} catch (UnreadableException e) {
-						System.out.println(this.myAgent.getLocalName() + " - MAP RECEPTION PROBLEM");
-						System.out.println(this.myAgent.getLocalName() + "dans l'ouverture de map");
-						e.printStackTrace();
-						this.finished = true;
-					}
-				
-				}
-			}
-			else {
-				if(System.currentTimeMillis() - this.timer >= wait){
-					((ExploreSoloAgent)this.myAgent).setMoving(true);
-					this.finished = true;
-				}
-			}
-		}
-		else if (this.ACKmap && this.sendACKmap) {
-			// Receiving an ACK for the map reception
-			MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.and(
-										  MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
-										  MessageTemplate.MatchSender(new AID(this.receiverName, AID.ISLOCALNAME))),
-										  MessageTemplate.MatchProtocol("ExchangeProtocol"));			
-
-			ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
-			if (msgReceived != null) {
-				if (msgReceived.getContent().equals("ACKmap") ) {
-					System.out.println(this.myAgent.getLocalName() + ": I've received an ACK map from " + this.receiverName);
-					this.finished = true;
-					((ExploreSoloAgent)this.myAgent).setMoving(true);
-				}
-				else if (msgReceived.getContent() == "-1" ) {
-					System.out.println("ACK map reception problem");
-				}
-			}
-			else {
-				if(System.currentTimeMillis() - this.timer >= wait){
-					((ExploreSoloAgent)this.myAgent).setMoving(true);
-					this.finished = true;
-				}
-			}
-		}
-	*/	
+		
+		
+		
 	}
 	
 	
 	public boolean done() {
 		return finished;
 	}
+	
 }

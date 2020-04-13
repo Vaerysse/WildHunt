@@ -62,7 +62,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 	public void action() {
 
 		if (this.myMap == null) {
-			System.out.println("Map null");
+			//System.out.println("Map null");
 			//this.myMap = ((ExploreSoloAgent)this.myAgent).getMap();
 			this.myMap = new MapRepresentation();
 			((ExploreSoloAgent)this.myAgent).setMap(this.myMap);
@@ -75,7 +75,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 			//List of observable from the agent's current position
 			List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
 			
-			System.out.println(this.myAgent.getLocalName() + " : " +lobs);
+			//System.out.println(this.myAgent.getLocalName() + " : " +lobs);
 			
 			/**
 			 * Just added here to let you see what the agent is doing, otherwise he will be too quick
@@ -96,7 +96,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 			String nextNode=null;
 			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
 			while(iter.hasNext()){
-				String nodeId=iter.next().getLeft();
+				String nodeId = iter.next().getLeft();
 				if (!this.closedNodes.contains(nodeId)){
 					if (!this.openNodes.contains(nodeId)){
 						this.openNodes.add(nodeId);
@@ -134,7 +134,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 
 				//list of observations associated to the currentPosition
 				List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
-				System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);
+				//System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);
 				
 				//example related to the use of the backpack for the treasure hunt
 				Boolean b=false;
@@ -204,7 +204,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 					
 				}
 				else {
-					System.out.println("Ho là là, je suis si fatigué!");
+					//System.out.println("Ho là là, je suis si fatigué!");
 				}
 			}
 

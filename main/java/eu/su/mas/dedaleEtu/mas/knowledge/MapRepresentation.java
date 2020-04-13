@@ -264,7 +264,7 @@ public class MapRepresentation implements Serializable {
 		
 		// Adding unknown nodes to the MapRepresentation
 		HashMap<String, ArrayList<String>> nodes = (HashMap<String, ArrayList<String>>) mapData.get("Nodes");
-		System.out.println(nodes);
+		//System.out.println(nodes);
 		for(String nodeID : nodes.keySet()) {
 			if (this.g.getNode(nodeID) == null) { // node unknown
 				addNode(nodeID, MapAttribute.valueOf(nodes.get(nodeID).get(0)), Long.parseLong(nodes.get(nodeID).get(1)), nodes.get(nodeID).get(2), Boolean.parseBoolean(nodes.get(nodeID).get(3)), Double.parseDouble(nodes.get(nodeID).get(4)));
@@ -389,10 +389,10 @@ public class MapRepresentation implements Serializable {
 	}
 	
 	public void sentGolem(String ID_node, String myPosition) {
-		//liste des noeuds autour du noeud ou l'on sent
+		//liste des noeuds autour du noeud où l'on sent
 		List<String> node_arround = this.neighborNode(ID_node);
 		for(int i = 0 ; i < node_arround.size(); ) {
-			//si le noeud contient un agent, est egale à myPosition
+			//si le noeud contient un agent, est égal à myPosition
 			if (node_arround.get(i).equals(myPosition) || !this.g.getNode(node_arround.get(i)).getAttribute("agent_present").equals("-1")) {
 				System.out.println("ici");
 				node_arround.remove(i);
@@ -401,11 +401,11 @@ public class MapRepresentation implements Serializable {
 				i++;
 			}
 		}
-		//si il reste des voisins aprés le tri
+		//si il reste des voisins après le tri
 		if(node_arround.size() > 0) {
 			double pourcent = 100/node_arround.size();
 	
-			//on met a jour les proba de trouver un golem sur les noeuds alentour
+			//on met à jour les probas de trouver un golem sur les noeuds alentour
 			for(String n : node_arround) {
 				if(!n.equals(myPosition) && !n.equals(ID_node)){
 					this.g.getNode(n).setAttribute("proba_golem_present", (Double) this.g.getNode(n).getAttribute("proba_golem_present") + pourcent);

@@ -22,6 +22,7 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 	private static final int wait = 2000;
 	
 	private boolean finished;
+	private boolean log = false;
 	
 	/**
 	 * To control the incoming communication flow
@@ -66,7 +67,6 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 		this.sendACKmap = false;
 		this.stepProtocol = 1;
 		this.timer = System.currentTimeMillis();
-		//ajouter un timer pour éviter les attentes à l'infini
 		
 	}
 	
@@ -81,7 +81,10 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			msg.setContent("connection");
 			msg.addReceiver(new AID(this.receiverName,AID.ISLOCALNAME));
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
-			System.out.println(this.myAgent.getLocalName() + ": I want to open a private channel with " + this.receiverName);
+			if (log) {
+				System.out.println(this.myAgent.getLocalName() + ": I want to open a private channel with " + this.receiverName);
+			}
+				
 		}
 		else if (this.sendMap) {
 			// Sending the map representation
@@ -97,7 +100,9 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 				e.printStackTrace();
 			}
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
-			System.out.println(this.myAgent.getLocalName() + ": I've sent my map to " + this.receiverName);
+			if (log) {
+				System.out.println(this.myAgent.getLocalName() + ": I've sent my map to " + this.receiverName);
+			}
 		}
 		else if (this.sendACKmap) {
 			// Acknowledging the map reception
@@ -107,7 +112,9 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			msg.setContent("ACKmap");
 			msg.addReceiver(new AID(this.receiverName,AID.ISLOCALNAME));
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
-			System.out.println(this.myAgent.getLocalName() + ": I've sent a map ACK to " + this.receiverName);
+			if (log) {
+				System.out.println(this.myAgent.getLocalName() + ": I've sent a map ACK to " + this.receiverName);
+			}
 		}
 			
 		// Receiving messages
@@ -118,18 +125,26 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 										  MessageTemplate.MatchSender(new AID(this.receiverName, AID.ISLOCALNAME))),
 										  MessageTemplate.MatchProtocol("ExchangeProtocol"));			
 			ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
-			//System.out.println("En attente de récéption message de demande de com priver");
+			if (log) {
+				System.out.println("En attente de réception message de demande de com privé");
+			}
 			if (msgReceived != null) {
-				System.out.println(this.myAgent.getLocalName() + ": I've received a request for a private channel from " + this.receiverName);
+				if (log) {
+					System.out.println(this.myAgent.getLocalName() + ": I've received a request for a private channel from " + this.receiverName);
+				}
 				if (msgReceived.getContent().equals("connection")) {
 					this.connection = false;
 					this.exchange = true;
 					this.sendConnection = false;
 					this.sendMap = true;
-					System.out.println(this.myAgent.getLocalName() + ": I've opened a private channel with " + this.receiverName);
+					if (log) {
+						System.out.println(this.myAgent.getLocalName() + ": I've opened a private channel with " + this.receiverName);
+					}
 				}
 				else if (msgReceived.getContent() == "-1" ) {
-					System.out.println(this.myAgent.getLocalName() + ": I have a connection problem with " + this.receiverName);
+					if (log) {
+						System.out.println(this.myAgent.getLocalName() + ": I have a connection problem with " + this.receiverName);
+					}
 					this.finished = true;
 				}
 			}
@@ -148,7 +163,9 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 										  MessageTemplate.MatchProtocol("MapProtocol"));			
 
 			ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
-			System.out.println(this.myAgent.getLocalName() + ": I've received a map from " + this.receiverName);
+			if (log) {
+				System.out.println(this.myAgent.getLocalName() + ": I've received a map from " + this.receiverName);
+			}
 			this.exchange = false;
 			this.stepProtocol += 1;
 			this.ACKmap = true;
@@ -160,15 +177,19 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			
 			if (msgReceived != null) {
 				if (msgReceived.getContent() == "-1" ) {
-					System.out.println(this.myAgent.getLocalName() + " - MAP RECEPTION PROBLEM");
+					if (log) {
+						System.out.println(this.myAgent.getLocalName() + " - MAP RECEPTION PROBLEM");
+					}
 					this.finished = true;
 				}
 				else {
 					try {
 						this.myMap.mergeMapData((HashMap<String, HashMap<String, ArrayList<String>>>) msgReceived.getContentObject());
 					} catch (UnreadableException e) {
-						System.out.println(this.myAgent.getLocalName() + " - MAP RECEPTION PROBLEM");
-						System.out.println(this.myAgent.getLocalName() + "dans l'ouverture de map");
+						if (log) {
+							System.out.println(this.myAgent.getLocalName() + " - MAP RECEPTION PROBLEM");
+							System.out.println(this.myAgent.getLocalName() + "dans l'ouverture de map");
+						}
 						e.printStackTrace();
 						this.finished = true;
 					}
@@ -219,12 +240,16 @@ public class PrivateChannelBehaviour extends SimpleBehaviour{
 			ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
 			if (msgReceived != null) {
 				if (msgReceived.getContent().equals("ACKmap") ) {
-					System.out.println(this.myAgent.getLocalName() + ": I've received an ACK map from " + this.receiverName);
+					if (log) {
+						System.out.println(this.myAgent.getLocalName() + ": I've received an ACK map from " + this.receiverName);
+					}
 					this.finished = true;
 					((ExploreSoloAgent)this.myAgent).setMoving(true);
 				}
 				else if (msgReceived.getContent() == "-1" ) {
-					System.out.println("ACK map reception problem");
+					if (log) {
+						System.out.println("ACK map reception problem");
+					}
 				}
 			}
 			else {

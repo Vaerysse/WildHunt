@@ -27,6 +27,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	private static final long serialVersionUID = -6431752665590433727L;
 	private MapRepresentation myMap;
 	private boolean moving = true;
+	private boolean inPursuit = false; // true if the agent is in pursuit of a golem
 	private List<String> blackListMap = new ArrayList<String>();
 	private List<String> agentZoneList = new ArrayList<String>();
 	private List<String> agentPositionList = new ArrayList<String>();
@@ -60,6 +61,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		lb.add(new SayHello(this));
 		
 		/***
+		 
 		 * MANDATORY TO ALLOW YOUR AGENT TO BE DEPLOYED CORRECTLY
 		 */
 		
@@ -76,6 +78,14 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	
 	public void setMoving(boolean value) {
 		this.moving = value;
+	}
+	
+	public boolean isInPursuit() {
+		return this.inPursuit;
+	}
+	
+	public void setInPursuit(boolean value) {
+		this.inPursuit = value;
 	}
 	
 	public void addAgentBlackList(String agent) {
