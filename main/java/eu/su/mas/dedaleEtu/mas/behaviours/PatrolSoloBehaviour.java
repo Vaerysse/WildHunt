@@ -61,12 +61,12 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 			//1) remove the current node from openlist and add it to closedNodes.
 
 			this.myMap.addNode(myPosition,MapAttribute.closed, System.currentTimeMillis(), "-1", false, 0.0); //attention 4éme argument actuellement a false car pas de detection de golme actuel
-
+			this.myMap.resetPourcentGolem();//nouveau tour du behaviour donc l'agent et le golem se sont peut êtré déplacer, il faut remettre le pourcentage des golems à 0
 			
 			/**
-			 * JE REGARDE SI JE SENS UN GOLEM ET REAGIS EN CONSEQUENCE
+			 * JE REGARDE SI JE SENT UN GOLEM ET REAGIT EN CONSEQUENCE
 			 */
-			//2) je regarde si je sens un golem
+			//2) je regarde si je sent un golem
 			boolean Golem_Present = false;
 			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
 			while(iter.hasNext()){
@@ -79,7 +79,7 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 				//si je sent le golem
 				if(couple.size() > 0) {
 					Golem_Present = true;
-					// je mets a jour le noeud pour dire que je le sens
+					// je met a jour le noeud pour dire que je le sent
 					System.out.println("J'attend les ordres!!!");
 					System.out.println("je sent");
 					this.myMap.setGolemDetection(ID_node, true, myPosition);
@@ -89,10 +89,9 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 					this.myMap.setGolemDetection(ID_node, false, myPosition);
 				}
 			}
-			//3) si j'ai senti un golem
+			//3) si j'ai sentie un golem
 			if(Golem_Present) {
-				//JE LANCE LA PROCEDURE DE COALITION + ATTRAPAGE DE GOLEM MOUHAHAHAHAHA
-				this.myAgent.addBehaviour(new SayGolem(((ExploreSoloAgent)this.myAgent), myPosition));
+				//JE LANCE LA PROCEDURE DDE CALITION + ATTRAPAGE DE GOLEM MOUHAHAHAHAHA
 			}
 			else{//3) sinon calcule objectif et chemin (si besoin)
 				this.bestPath= this.myMap.bestReward(lobs);
@@ -102,9 +101,9 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 				//4) move
 				//is agent move is true
 				if (((ExploreSoloAgent) this.myAgent).isMoving()){
-					//on enregistre le dernier noeud où on était avant de bouger
+					//on enregistre le dernier noeud où on été avant dde bouger
 					((ExploreSoloAgent)this.myAgent).setLastVisitedNode(myPosition);
-					//si l'agent n'est pas à destination
+					//si l'agent n'est pas a destination
 					//System.out.println(this.myAgent.getLocalName() + " my position : " + myPosition + ", je doit aller en : " + this.bestPath);
 					((AbstractDedaleAgent)this.myAgent).moveTo(this.bestPath);//agent move 1 node
 					//si agent bloqué

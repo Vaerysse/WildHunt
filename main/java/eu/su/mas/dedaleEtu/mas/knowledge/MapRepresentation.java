@@ -286,7 +286,7 @@ public class MapRepresentation implements Serializable {
 		
 		// Adding unknown edges to the MapRepresentation
 		HashMap<String, ArrayList<String>> edges = (HashMap<String, ArrayList<String>>) mapData.get("Edges");
-		System.out.println(edges);
+		//System.out.println(edges);
 		for(String edgeID : edges.keySet()) {
 			addEdge(edges.get(edgeID).get(0), edges.get(edgeID).get(1)); // addEge checks himself if the edge already exist
 		}
@@ -390,32 +390,28 @@ public class MapRepresentation implements Serializable {
 	
 	public void sentGolem(String ID_node, String myPosition) {
 		//liste des noeuds autour du noeud ou l'on sent
-		List<String> node_arround = new ArrayList<String>();
-		
-		/**
-		 * CHERCHER LES NOEUDS VOISINS A ID_node ET LES AJOUTER A node_arround
-		 */
-		
-		
-		double pourcent = 0.0;
-		// si la liste est supérieur à deux (car on enléve le noeud courant et le noeud d'ou on vient
-		if(ID_node.equals(myPosition)) {
-			if(node_arround.size() > 0) {					
-				pourcent = 100/(node_arround.size());
-			}	
-		}
-		else {				
-			if(node_arround.size() > 1) {
-				pourcent = 100/(node_arround.size()-1);
-			}	
-		}		
-		//on met a jour les proba de trouver un golem sur les noeuds alentour
-		for(String n : node_arround) {
-			if(!n.equals(myPosition) && !n.equals(ID_node)){
-				this.g.getNode(n).setAttribute("proba_golem_present", (Double) this.g.getNode(n).getAttribute("proba_golem_present") + pourcent);
+		List<String> node_arround = this.neighborNode(ID_node);
+		for(int i = 0 ; i < node_arround.size(); ) {
+			//si le noeud contient un agent, est egale à myPosition
+			if (node_arround.get(i).equals(myPosition) || !this.g.getNode(node_arround.get(i)).getAttribute("agent_present").equals("-1")) {
+				System.out.println("ici");
+				node_arround.remove(i);
+			}
+			else {
+				i++;
 			}
 		}
-		
+		//si il reste des voisins aprés le tri
+		if(node_arround.size() > 0) {
+			double pourcent = 100/node_arround.size();
+	
+			//on met a jour les proba de trouver un golem sur les noeuds alentour
+			for(String n : node_arround) {
+				if(!n.equals(myPosition) && !n.equals(ID_node)){
+					this.g.getNode(n).setAttribute("proba_golem_present", (Double) this.g.getNode(n).getAttribute("proba_golem_present") + pourcent);
+				}
+			}		
+		}
 	}
 	
 	public void setGolemDetection(String ID_node, boolean sent, String myPosition) {
@@ -433,6 +429,38 @@ public class MapRepresentation implements Serializable {
 			}
 			//sinon calcule de proba
 			this.sentGolem(ID_node, myPosition);
+		}
+	}
+	
+	/**
+	 * Function return a neighbour's list of specific node
+	 * @param node : (String) id node
+	 * @return List <String> neighbor of node (param)
+	 */
+	public List <String> neighborNode(String node){
+		List <String> neighbor = new ArrayList<String>();
+		Iterator<Edge> iterE=this.g.edges().iterator();
+		while (iterE.hasNext()){
+			Edge e=iterE.next();
+			if (e.getSourceNode().getId().equals(node)) {
+				neighbor.add(e.getTargetNode().getId());
+			}
+			else if (e.getTargetNode().getId().equals(node)) {
+				neighbor.add(e.getSourceNode().getId());
+			}
+		}		
+		
+		return neighbor;
+	}
+	
+	/**
+	 * This function reset proba_golem_present attribute at 0.0 for all nodes
+	 */
+	public void resetPourcentGolem() {
+		Iterator<Node> iter=this.g.iterator();
+		while(iter.hasNext()){
+			Node n=iter.next();
+			n.setAttribute("proba_golem_present", 0.0);
 		}
 	}
 	
