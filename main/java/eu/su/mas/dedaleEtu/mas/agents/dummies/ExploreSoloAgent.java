@@ -7,6 +7,7 @@ import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploSoloBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ReceiveMessageBehaviour;
+import eu.su.mas.dedaleEtu.mas.behaviours.ReceiveMessageSayGolemBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.SayGolem;
 import eu.su.mas.dedaleEtu.mas.behaviours.SayHello;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
@@ -35,6 +36,8 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	private long startDate = System.currentTimeMillis();
 	private boolean needObj = true;
 	private String lastVisitedNode = "";
+	private boolean inCoalition = false;
+	private boolean inCoalitionFull = false;
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -61,6 +64,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		lb.add(new ReceiveMessageBehaviour(this));
 		lb.add(new SayHello(this));
 		lb.add(new SayGolem(this));
+		lb.add(new ReceiveMessageSayGolemBehaviour(this));
 		
 		/***
 		 
@@ -152,5 +156,21 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	
 	public String getLastVisitedNode() {
 		return this.lastVisitedNode;
+	}
+	
+	public boolean getInCoalition() {
+		return this.inCoalition;
+	}
+	
+	public void setInCoalition(boolean value) {
+		this.inCoalition = value;
+	}
+	
+	public boolean getInCoalitionFull() {
+		return this.inCoalitionFull;
+	}
+	
+	public void setInCoalitionFull(boolean value) {
+		this.inCoalitionFull = value;
 	}
 }

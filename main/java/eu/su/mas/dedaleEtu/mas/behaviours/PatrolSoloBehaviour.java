@@ -1,5 +1,6 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -70,6 +71,7 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 			//2) je regarde si je sens un golem
 			boolean Golem_Present = false;
 			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter = lobs.iterator();
+			List <String> node_sent = new ArrayList<String>();
 			while(iter.hasNext()){
 				Couple<String, List<Couple<Observation, Integer>>> temp = iter.next();
 				List<Couple<Observation, Integer>> couple = temp.getRight();
@@ -80,6 +82,7 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 				//si je sens le golem
 				if(couple.size() > 0) {
 					Golem_Present = true;
+					node_sent.add(ID_node);
 					// je mets a jour le noeud pour dire que je le sens
 					//System.out.println("J'attends les ordres !!!");
 					//System.out.println("je sens");
@@ -90,13 +93,14 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 					this.myMap.setGolemDetection(ID_node, false, myPosition);
 				}
 			}
+			this.myMap.setNodeSmell(node_sent);
 			//3) si j'ai senti un golem
 			if(Golem_Present) {
 				if (!((ExploreSoloAgent)this.myAgent).isInPursuit()) { // si je ne suis pas déjà entrain de poursuivre un golem
 					//JE LANCE LA PROCEDURE DE COALITION + ATTRAPAGE DE GOLEM MOUHAHAHAHAHA
 					System.out.println("GOLEM - " + this.myAgent.getLocalName());
 					((ExploreSoloAgent)this.myAgent).setInPursuit(true);
-					Coalition coal = new Coalition((ExploreSoloAgent)this.myAgent);
+					Coalition coal = new Coalition((ExploreSoloAgent)this.myAgent); //TODO mettre dans behaviour coalision
 				}
 				else {
 					System.out.println("Je poursuis déjà - " + this.myAgent.getLocalName());

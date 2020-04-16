@@ -65,6 +65,7 @@ public class MapRepresentation implements Serializable {
 	private Integer nbEdges;//used to generate the edges ids
 
 	private SerializableSimpleGraph<String, MapAttribute> sg;//used as a temporary dataStructure during migration
+	private List <String> nodeSmellList=  new ArrayList<String>();
 
 
 	public MapRepresentation() {
@@ -462,6 +463,14 @@ public class MapRepresentation implements Serializable {
 			Node n=iter.next();
 			n.setAttribute("proba_golem_present", 0.0);
 		}
+	}
+	
+	public void setNodeSmell(List <String> node_sent) {
+		this.nodeSmellList = node_sent;
+	}
+	
+	public List <String> getNodeSmell(){
+		return this.nodeSmellList;
 	}
 	
 }
