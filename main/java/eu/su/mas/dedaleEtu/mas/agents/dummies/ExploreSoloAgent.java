@@ -7,6 +7,7 @@ import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploSoloBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ReceiveMessageBehaviour;
+import eu.su.mas.dedaleEtu.mas.behaviours.SayGolem;
 import eu.su.mas.dedaleEtu.mas.behaviours.SayHello;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import jade.core.behaviours.Behaviour;
@@ -59,6 +60,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		lb.add(new ExploSoloBehaviour(this,this.myMap));
 		lb.add(new ReceiveMessageBehaviour(this));
 		lb.add(new SayHello(this));
+		lb.add(new SayGolem(this));
 		
 		/***
 		 

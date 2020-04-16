@@ -38,7 +38,7 @@ public class SayHello extends TickerBehaviour{
 		msg.setSender(this.myAgent.getAID());
 		msg.setProtocol("UselessProtocol");
 
-		if (myPosition!=""){
+		if (myPosition!="" && !((ExploreSoloAgent)this.myAgent).isInPursuit()){
 			((ExploreSoloAgent)this.myAgent).cleanAgentPositionList();
 			System.out.println("Agent "+this.myAgent.getLocalName()+ " is trying to reach its friends");
 			msg.setContent(myPosition);

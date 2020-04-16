@@ -95,9 +95,8 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 				if (!((ExploreSoloAgent)this.myAgent).isInPursuit()) { // si je ne suis pas déjà entrain de poursuivre un golem
 					//JE LANCE LA PROCEDURE DE COALITION + ATTRAPAGE DE GOLEM MOUHAHAHAHAHA
 					System.out.println("GOLEM - " + this.myAgent.getLocalName());
-					Coalition coal = new Coalition((ExploreSoloAgent)this.myAgent);
-					this.myAgent.addBehaviour(new SayGolem(((ExploreSoloAgent)this.myAgent), myPosition));
 					((ExploreSoloAgent)this.myAgent).setInPursuit(true);
+					Coalition coal = new Coalition((ExploreSoloAgent)this.myAgent);
 				}
 				else {
 					System.out.println("Je poursuis déjà - " + this.myAgent.getLocalName());

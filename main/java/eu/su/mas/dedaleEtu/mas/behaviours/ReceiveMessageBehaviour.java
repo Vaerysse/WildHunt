@@ -32,36 +32,39 @@ public class ReceiveMessageBehaviour extends SimpleBehaviour{
 
 
 	public void action() {
-		//1) receive the message
-		final MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
+		if (!((ExploreSoloAgent)this.myAgent).isInPursuit()) {
+			//1) receive the message
+			final MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 																MessageTemplate.MatchProtocol("UselessProtocol"));			
 
-		final ACLMessage msg = this.myAgent.receive(msgTemplate);
+			final ACLMessage msg = this.myAgent.receive(msgTemplate);
 		
-		//System.out.println("Coucou, tu veux voir ma b.... belle reception de message?");
+			//System.out.println("Coucou, tu veux voir ma b.... belle reception de message?");
 		
-		//2)if msg no null
-		if (msg != null){
-			// add position agent in node
-			((ExploreSoloAgent)this.myAgent).getMap().addOtherAgentPosition(msg.getSender().getLocalName(), msg.getContent());
+			//2)if msg no null
+			if (msg != null){
+				// add position agent in node
+				((ExploreSoloAgent)this.myAgent).getMap().addOtherAgentPosition(msg.getSender().getLocalName(), msg.getContent());
 			
-			//add sender agent in AgentZoneList
-			if (!((ExploreSoloAgent)this.myAgent).getAgentZoneList().contains(msg.getSender().getLocalName())){
-				((ExploreSoloAgent)this.myAgent).addAgentZoneList(msg.getSender().getLocalName());
+				//add sender agent in AgentZoneList
+				if (!((ExploreSoloAgent)this.myAgent).getAgentZoneList().contains(msg.getSender().getLocalName())){
+					((ExploreSoloAgent)this.myAgent).addAgentZoneList(msg.getSender().getLocalName());
+				}
+				// verification sender name is not in agentBlackList
+				if (((ExploreSoloAgent)this.myAgent).getAgentBlackList().contains(msg.getSender().getLocalName()) == false) {	
+					System.out.println(this.myAgent.getLocalName()+"<----Result received from "+msg.getSender().getLocalName()+" ,content= "+msg.getContent());
+					((ExploreSoloAgent)this.myAgent).addAgentPosittionList(msg.getContent());
+					//add sender name in agentBlackList
+					//((ExploreSoloAgent)this.myAgent).addAgentBlackList(msg.getSender().getLocalName());
+					//Stop the move
+					((ExploreSoloAgent)this.myAgent).setMoving(false);
+					//Open the private communication between this agent and sender agent
+					this.myAgent.addBehaviour(new PrivateChannelBehaviour(this.myAgent, msg.getSender().getLocalName()));
+				}
 			}
-			// verification sender name is not in agentBlackList
-			if (((ExploreSoloAgent)this.myAgent).getAgentBlackList().contains(msg.getSender().getLocalName()) == false) {	
-				System.out.println(this.myAgent.getLocalName()+"<----Result received from "+msg.getSender().getLocalName()+" ,content= "+msg.getContent());
-				((ExploreSoloAgent)this.myAgent).addAgentPosittionList(msg.getContent());
-				//add sender name in agentBlackList
-				//((ExploreSoloAgent)this.myAgent).addAgentBlackList(msg.getSender().getLocalName());
-				//Stop the move
-				((ExploreSoloAgent)this.myAgent).setMoving(false);
-				//Open the private communication between this agent and sender agent
-				this.myAgent.addBehaviour(new PrivateChannelBehaviour(this.myAgent, msg.getSender().getLocalName()));
+			else{
+				block();// the behaviour goes to sleep until the arrival of a new message in the agent's Inbox.
 			}
-		}else{
-			block();// the behaviour goes to sleep until the arrival of a new message in the agent's Inbox.
 		}
 	}
 
