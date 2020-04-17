@@ -13,10 +13,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.graphstream.algorithm.Dijkstra;
+import org.graphstream.algorithm.Toolkit;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.EdgeRejectedException;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
+import org.graphstream.algorithm.Toolkit;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.fx_viewer.FxViewer;
 import org.graphstream.ui.view.Viewer;
@@ -63,6 +65,8 @@ public class MapRepresentation implements Serializable {
 	private Graph g; //data structure non serializable
 	private Viewer viewer; //ref to the display,  non serializable
 	private Integer nbEdges;//used to generate the edges ids
+	private int maxDegree = 0;
+	private double avDegree = 0;
 
 	private SerializableSimpleGraph<String, MapAttribute> sg;//used as a temporary dataStructure during migration
 	private List <String> nodeSmellList=  new ArrayList<String>();
@@ -89,10 +93,10 @@ public class MapRepresentation implements Serializable {
 	 */
 	public void addNode(String id, MapAttribute mapAttribute, long time_visited, String ID_agent, boolean present, double proba_golem){
 		Node n;
-		if (this.g.getNode(id)==null){
-			n=this.g.addNode(id);
+		if (this.g.getNode(id) == null){
+			n = this.g.addNode(id);
 		}else{
-			n=this.g.getNode(id);
+			n = this.g.getNode(id);
 		}
 		n.clearAttributes();
 		n.setAttribute("ui.class", mapAttribute.toString());
@@ -128,14 +132,14 @@ public class MapRepresentation implements Serializable {
 	 * @return the list of nodes to follow
 	 */
 	public List<String> getShortestPath(String idFrom,String idTo){
-		List<String> shortestPath=new ArrayList<String>();
+		List<String> shortestPath = new ArrayList<String>();
 
 		Dijkstra dijkstra = new Dijkstra();//number of edge
 		dijkstra.init(g);
 		dijkstra.setSource(g.getNode(idFrom));
 		dijkstra.compute();//compute the distance to all nodes from idFrom
-		List<Node> path=dijkstra.getPath(g.getNode(idTo)).getNodePath(); //the shortest path from idFrom to idTo
-		Iterator<Node> iter=path.iterator();
+		List<Node> path = dijkstra.getPath(g.getNode(idTo)).getNodePath(); //the shortest path from idFrom to idTo
+		Iterator<Node> iter = path.iterator();
 		while (iter.hasNext()){
 			shortestPath.add(iter.next().getId());
 		}
@@ -149,17 +153,17 @@ public class MapRepresentation implements Serializable {
 	 * Before the migration we kill all non serializable components and store their data in a serializable form
 	 */
 	public void prepareMigration(){
-		this.sg= new SerializableSimpleGraph<String,MapAttribute>();
-		Iterator<Node> iter=this.g.iterator();
+		this.sg = new SerializableSimpleGraph<String,MapAttribute>();
+		Iterator<Node> iter = this.g.iterator();
 		while(iter.hasNext()){
-			Node n=iter.next();
+			Node n = iter.next();
 			sg.addNode(n.getId(),(MapAttribute)n.getAttribute("ui.class"));
 		}
-		Iterator<Edge> iterE=this.g.edges().iterator();
+		Iterator<Edge> iterE = this.g.edges().iterator();
 		while (iterE.hasNext()){
-			Edge e=iterE.next();
-			Node sn=e.getSourceNode();
-			Node tn=e.getTargetNode();
+			Edge e = iterE.next();
+			Node sn = e.getSourceNode();
+			Node tn = e.getTargetNode();
 			sg.addEdge(e.getId(), sn.getId(), tn.getId());
 		}
 
@@ -174,16 +178,16 @@ public class MapRepresentation implements Serializable {
 	 */
 	public void loadSavedData(){
 
-		this.g= new SingleGraph("My world vision");
+		this.g = new SingleGraph("My world vision");
 		this.g.setAttribute("ui.stylesheet",nodeStyle);
 
 		openGui();
 
-		Integer nbEd=0;
+		Integer nbEd = 0;
 		for (SerializableNode<String, MapAttribute> n: this.sg.getAllNodes()){
 			this.g.addNode(n.getNodeId()).setAttribute("ui.class", n.getNodeContent().toString());
 			for(String s:this.sg.getEdges(n.getNodeId())){
-				this.g.addEdge(nbEd.toString(),n.getNodeId(),s);
+				this.g.addEdge(nbEd.toString(), n.getNodeId(), s);
 				nbEd++;
 			}
 		}
@@ -195,7 +199,7 @@ public class MapRepresentation implements Serializable {
 	 */
 	private void closeGui() {
 		//once the graph is saved, clear non serializable components
-		if (this.viewer!=null){
+		if (this.viewer != null){
 			try{
 				this.viewer.close();
 			}catch(NullPointerException e){
@@ -209,7 +213,7 @@ public class MapRepresentation implements Serializable {
 	 * Method called after a migration to reopen GUI components
 	 */
 	private void openGui() {
-		this.viewer =new FxViewer(this.g, FxViewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);////GRAPH_IN_GUI_THREAD);
+		this.viewer = new FxViewer(this.g, FxViewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);////GRAPH_IN_GUI_THREAD);
 		viewer.enableAutoLayout();
 		viewer.setCloseFramePolicy(FxViewer.CloseFramePolicy.CLOSE_VIEWER);
 		viewer.addDefaultView(true);
@@ -228,7 +232,7 @@ public class MapRepresentation implements Serializable {
 		HashMap<String, HashMap<String, ArrayList<String>>> serialMap = new HashMap<String, HashMap<String, ArrayList<String>>>();
 		
 		//Nodes
-		Iterator<Node> iter=this.g.iterator();
+		Iterator<Node> iter = this.g.iterator();
 		HashMap<String, ArrayList<String>> nodeList = new HashMap<String, ArrayList<String>>();
 		while(iter.hasNext()){
 			Node n=iter.next();
@@ -243,7 +247,7 @@ public class MapRepresentation implements Serializable {
 		serialMap.put("Nodes", nodeList);
 
 		//Edges
-		Iterator<Edge> iterE=this.g.edges().iterator();
+		Iterator<Edge> iterE = this.g.edges().iterator();
 		HashMap<String, ArrayList<String>> edgeList = new HashMap<String, ArrayList<String>>();
 		while (iterE.hasNext()){
 			Edge e=iterE.next();
@@ -371,12 +375,12 @@ public class MapRepresentation implements Serializable {
 	
 	public void addOtherAgentPosition(String Id_agent, String ID_node){
 		//if node is not exit
-		if (this.g.getNode(ID_node)==null){
+		if (this.g.getNode(ID_node) == null){
 			this.addNode(ID_node,MapAttribute.open, System.currentTimeMillis(), Id_agent, false, 0.0);
 		}
 		else {
 			//delete agent present in other node
-			Iterator<Node> iter=this.g.iterator();
+			Iterator<Node> iter = this.g.iterator();
 			HashMap<String, ArrayList<String>> nodeList = new HashMap<String, ArrayList<String>>();
 			while(iter.hasNext()){
 				Node n=iter.next();
@@ -440,9 +444,9 @@ public class MapRepresentation implements Serializable {
 	 */
 	public List <String> neighborNode(String node){
 		List <String> neighbor = new ArrayList<String>();
-		Iterator<Edge> iterE=this.g.edges().iterator();
+		Iterator<Edge> iterE = this.g.edges().iterator();
 		while (iterE.hasNext()){
-			Edge e=iterE.next();
+			Edge e = iterE.next();
 			if (e.getSourceNode().getId().equals(node)) {
 				neighbor.add(e.getTargetNode().getId());
 			}
@@ -458,9 +462,9 @@ public class MapRepresentation implements Serializable {
 	 * This function reset proba_golem_present attribute at 0.0 for all nodes
 	 */
 	public void resetPourcentGolem() {
-		Iterator<Node> iter=this.g.iterator();
+		Iterator<Node> iter = this.g.iterator();
 		while(iter.hasNext()){
-			Node n=iter.next();
+			Node n = iter.next();
 			n.setAttribute("proba_golem_present", 0.0);
 		}
 	}
@@ -473,4 +477,24 @@ public class MapRepresentation implements Serializable {
 		return this.nodeSmellList;
 	}
 	
+	
+	public int getMaxDegree() {
+		return this.maxDegree;
+	}
+	
+	public double getAvDegree() {
+		return this.avDegree;
+	}
+	
+	public void setMaxDegree() {
+		ArrayList<Node> degrees = Toolkit.degreeMap(g);
+		this.maxDegree = degrees.get(0).getDegree();
+		System.out.println("Max degree = " + this.maxDegree);
+	}
+	
+	public void setAvDegree() {
+		this.avDegree = Toolkit.averageDegree(g);
+		System.out.println("Average degree = " + this.avDegree);
+	}
+		
 }

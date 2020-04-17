@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import org.graphstream.graph.Node;
+import org.graphstream.graph.Graph;
+import org.graphstream.algorithm.Toolkit;
+
 import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
@@ -90,8 +94,9 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 			this.closedNodes.add(myPosition);
 			this.openNodes.remove(myPosition);
 
-			this.myMap.addNode(myPosition,MapAttribute.closed, System.currentTimeMillis(), "-1", false, 0.0); //attention 4éme argument actuellement a false car pas de detection de golme actuel
+			this.myMap.addNode(myPosition, MapAttribute.closed, System.currentTimeMillis(), "-1", false, 0.0); //attention 4éme argument actuellement a false car pas de detection de golme actuel
 
+					
 			//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
 			String nextNode=null;
 			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
@@ -114,7 +119,12 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 			if (this.openNodes.isEmpty()){
 				//Explo finished
 				this.myAgent.addBehaviour(new PatrolSoloBehaviour(((ExploreSoloAgent)this.myAgent), this.myMap));
-				finished=true;
+				
+				if (myMap.getMaxDegree() == 0 || myMap.getAvDegree() == 0) { // no need to compute graph degree if already done by another agent
+					myMap.setMaxDegree(); // compute the max degree in the graph
+					myMap.setAvDegree(); // compute the average degree in the graph
+				}
+				finished = true;
 				System.out.println("Exploration successufully done, behaviour removed.");
 			}else{
 				//4) select next move.
