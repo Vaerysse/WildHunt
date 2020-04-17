@@ -23,105 +23,60 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	private boolean finished;
 	
 	private static final int wait = 2000;
+	private String id_Coal;
 	
-	
-	/**
-	 * To control the incoming communication flow
-	 */
-	private boolean connection, exchange, ACKmap, sendProposal, sendAnswer, sendConfirmation; // sendConnection, sendMap, sendACKmap
-	
-	/**
-	 * To control the outgoing communication flow
-	 */
-	private int stepProtocol;
-	
-	/**
-	 * Name of the agent to communicate with
-	 */
-	private String receiverName;
-	
-	/**
-	 * Current knowledge of the agent regarding the environment
-	 */
-	//private MapRepresentation myMap;
+	private HashMap<String, String> members = new HashMap<String, String>();
+	private int maxAgent;
 	
 	
 	private long timer;
 	
-	public CoalitionBehaviour(final Agent myagent, String receiverName) {
+	public CoalitionBehaviour(final Agent myagent, String id) {
 		super(myagent);
+
+		this.id_Coal = id;
+		this.members.put(this.myAgent.getLocalName(),"Leader");
+		//TODO definir nombre agent max dans coalition
+		this.maxAgent = 4;
 		
-		//this.myMap = ((ExploreSoloAgent)this.myAgent).getMap();
-		this.receiverName = receiverName;
-		this.finished = false;
-		this.connection = true;
-		this.sendProposal = true;
-		this.exchange = false;
-		this.sendAnswer = false;
-		this.ACKmap = false;
-		this.sendConfirmation = false;
-		this.stepProtocol = 1;
-		this.timer = System.currentTimeMillis();
 	}
 	
 	@Override
 	public void action() {
 		
-		/** TODO pour moi faut déjà différencier 2 cas, je fait déjà partie d'une coalition donc j'ignore le message
-		*je ne fait pas partie d'une coalition
-		*pui ensuite, je sent aussi un golem ou bien je ne sent pas
-		*dans les deux cas je demande a rentrer en présisent si oui ou non je sen un golem (plus de chance d'être pris si jamais plusieurs candidat)
-		*/
+		System.out.println("Behaviour de coalition " + this.id_Coal + " actif");
 		
+		final MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
+				MessageTemplate.MatchProtocol(this.id_Coal));			
+
+		final ACLMessage msg = this.myAgent.receive(msgTemplate);
 		
-		// Sending messages
-		if (this.sendProposal){
-			// Sending a message to propose a coalition
-			ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-			msg.setSender(this.myAgent.getAID());
-			msg.setProtocol("CoalitionProtocol");
-			msg.setContent("coalition proposal");
-			msg.addReceiver(new AID(this.receiverName, AID.ISLOCALNAME));
-			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
-			System.out.println(this.myAgent.getLocalName() + ": I want to create a coalition with " + this.receiverName);
-		}
-		else if (this.sendAnswer) {
-			
-			// TODO: déterminer si intéressant d'entrer ds la coalition ou pas
-			String answer = new String(); // acceptation or refusal
-			
-			// Sending an answer to the coalition proposal
-			ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-			msg.setSender(this.myAgent.getAID());
-			msg.setProtocol("CoalitionProtocol");
-			
-			// TODO: déterminer si on répond à tous les agents de la proposition de coalition
-			msg.addReceiver(new AID(this.receiverName, AID.ISLOCALNAME));
-			
-			msg.setContent(answer);
-			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
-			System.out.println(this.myAgent.getLocalName() + ": I've sent my answer ("+ answer +") to " + this.receiverName);
-		}
-		else if (this.sendConfirmation) {
-			
-			// TODO: déterminer si on confirme la coalition ou non
-			String answer = new String();
-			// on met la confirmation à ce niveau là ?
-			
-			// Confirming the coalition creation
-			ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-			msg.setSender(this.myAgent.getAID());
-			msg.setProtocol("CoalitionProtocol");
-			msg.setContent(answer);
-			
-			// TODO: idem, transmettre au chef ou à tous les agents ?
-			msg.addReceiver(new AID(this.receiverName,AID.ISLOCALNAME));
-			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
-			System.out.println(this.myAgent.getLocalName() + ": I've sent a map ACK to " + this.receiverName);
+		if (msg != null){
+			if (msg.getContent().equals("RequestEntry?")) {
+				this.addAgentCoalition(msg);
+			}
 		}
 		
-		
-		
+	}
+	
+	public void addAgentCoalition(ACLMessage msg) {
+		if(this.members.size() < this.maxAgent) {
+			System.out.println("envoi message coalition ok");
+			ACLMessage msgRespond=new ACLMessage(ACLMessage.INFORM);
+			msgRespond.setSender(this.myAgent.getAID());
+			msgRespond.setProtocol("AnswerEntry");
+			msgRespond.setContent("ok");
+			msgRespond.addReceiver(new AID(msg.getSender().getLocalName(),AID.ISLOCALNAME));
+			this.members.put(msg.getSender().getLocalName(),"Other");
+		}
+		else {
+			System.out.println("envoi message coalition non");
+			ACLMessage msgRespond=new ACLMessage(ACLMessage.INFORM);
+			msgRespond.setSender(this.myAgent.getAID());
+			msgRespond.setProtocol("AnswerEntry");
+			msgRespond.setContent("no");
+			msgRespond.addReceiver(new AID(msg.getSender().getLocalName(),AID.ISLOCALNAME));
+		}
 	}
 	
 	

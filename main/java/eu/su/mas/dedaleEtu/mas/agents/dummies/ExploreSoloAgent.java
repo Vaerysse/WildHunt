@@ -2,6 +2,7 @@ package eu.su.mas.dedaleEtu.mas.agents.dummies;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
@@ -27,6 +28,7 @@ import jade.core.behaviours.Behaviour;
 public class ExploreSoloAgent extends AbstractDedaleAgent {
 
 	private static final long serialVersionUID = -6431752665590433727L;
+	private static final int max_rand = 999999999;
 	private MapRepresentation myMap;
 	private boolean moving = true;
 	private boolean inPursuit = false; // true if the agent is in pursuit of a golem
@@ -38,6 +40,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	private String lastVisitedNode = "";
 	private boolean inCoalition = false;
 	private boolean inCoalitionFull = false;
+	private boolean leaderCoalition = false;
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -63,7 +66,6 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		lb.add(new ExploSoloBehaviour(this,this.myMap));
 		lb.add(new ReceiveMessageBehaviour(this));
 		lb.add(new SayHello(this));
-		lb.add(new SayGolem(this));
 		lb.add(new ReceiveMessageSayGolemBehaviour(this));
 		
 		/***
@@ -172,5 +174,18 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	
 	public void setInCoalitionFull(boolean value) {
 		this.inCoalitionFull = value;
+	}
+	
+	public boolean leaderCoalition() {
+		return this.leaderCoalition;
+	}
+	
+	public void leaderCoalition(boolean value) {
+		this.leaderCoalition = value;
+	}
+	
+	public String idBehaviourCreation() {
+		Random rand = new Random();
+		return "C" + rand.nextInt(max_rand); //id creation
 	}
 }

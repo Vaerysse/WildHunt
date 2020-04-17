@@ -14,44 +14,41 @@ public class SayGolem extends TickerBehaviour{
 	 */
 
 	private static final long serialVersionUID = 5L;
-	
+	private String idCoal;
 	
 	/**
 	 * An agent tries to contact its friends and to give them the position of the golem it has seen.
 	 * @param myagent the agent who possess the behaviour
 	 * @param myPosition the agent's position, when he has detected a golem
 	 */
-	public SayGolem(final Agent myagent) {
+	public SayGolem(final Agent myagent, String id_Coal) {
 		super(myagent, 2000); // TODO: ajuster le timer
+		this.idCoal = id_Coal;
 
 	}
 
 	@Override
 	public void onTick() {
 		
-		if (((ExploreSoloAgent)this.myAgent).isInPursuit()) {
 
-			// Update position
-			String myPosition = ((ExploreSoloAgent)this.myAgent).getCurrentPosition();
-			
-			//A message is defined by : a performative, a sender, a set of receivers, (a protocol),(a content (and/or contentOBject))
-			ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-			msg.setSender(this.myAgent.getAID());
-			msg.setProtocol("GolemFoundProtocol");
-			
-			if (myPosition != "") {
-				((ExploreSoloAgent)this.myAgent).cleanAgentPositionList();
-				System.out.println("GOLEM !!!!!!!!!!! Agent "+ this.myAgent.getLocalName() + " has seen a golem when at " + myPosition);
-				msg.setContent(myPosition);
+		// Update position
+		String myPosition = ((ExploreSoloAgent)this.myAgent).getCurrentPosition();
+					//A message is defined by : a performative, a sender, a set of receivers, (a protocol),(a content (and/or contentOBject))
+		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+		msg.setSender(this.myAgent.getAID());			
+		msg.setProtocol("GolemFoundProtocol");
+		
+		if (myPosition != "") {
+			((ExploreSoloAgent)this.myAgent).cleanAgentPositionList();				
+			System.out.println("GOLEM !!!!!!!!!!! Agent "+ this.myAgent.getLocalName() + " has seen a golem when at " + myPosition);
+			msg.setContent(this.idCoal);
 				
-				// TODO: passer par les pages jaunes pr un broadcast
-				msg.addReceiver(new AID("Explo1", AID.ISLOCALNAME));
-				msg.addReceiver(new AID("Explo2", AID.ISLOCALNAME));
+			// TODO: passer par les pages jaunes pr un broadcast
+			msg.addReceiver(new AID("Explo1", AID.ISLOCALNAME));
+			msg.addReceiver(new AID("Explo2", AID.ISLOCALNAME));
 	
-				//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
-				((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
-			
-			}
+			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
+			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
 		}
 	}
 }

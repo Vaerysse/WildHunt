@@ -1,5 +1,6 @@
 package eu.su.mas.dedaleEtu.princ;
 import java.util.List;
+import java.util.Random;
 
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
 import java.util.HashMap;
@@ -16,6 +17,7 @@ public class Coalition {
 	//TODO: est-ce qu'il est nécessaire de rajouter des rôles ? Par exemple répétiteur pr propager l'information qd les agents sont trop éloignés ?
 	// Est-ce qu'il est nécessaire que l'objet soit sérialisable (est-ce qu'on va avoir besoin de l'envoyer à un moment ?) Si oui changer l'agent en String
 	private HashMap<ExploreSoloAgent, Integer> members;
+	private static final int max_rand = 999999999;
 
 	
 	
@@ -34,6 +36,7 @@ public class Coalition {
 	public int getID() {
 		return this.id;
 	}
+	
 	
 	public HashMap<ExploreSoloAgent, Integer> getMembers() {
 		return this.members;

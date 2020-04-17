@@ -12,7 +12,7 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 
 	private boolean log = true;
 	private boolean finished = false;
-	private static final int wait = 1000;
+	private static final int wait = 2000;
 	private long timer;
 	private boolean requestEnterCoalition = true;
 	private boolean respondEnterCoalition = false;
@@ -33,7 +33,7 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 		final MessageTemplate msgTemplateRequest = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 															MessageTemplate.MatchProtocol("AnswerEntry"));			
 
-		final ACLMessage msgRequest = this.myAgent.receive(msgTemplate);
+		final ACLMessage msgRequest = this.myAgent.receive(msgTemplateRequest);
 	
 		//System.out.println("Coucou, tu veux voir ma b.... belle reception de message de SayGolem?");
 	
@@ -47,7 +47,7 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 					// Sending a message to ask for the opening of a private channel
 					ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
 					msgSend.setSender(this.myAgent.getAID());
-					msgSend.setProtocol("RequestEntry");
+					msgSend.setProtocol(msg.getContent());
 					msgSend.setContent("RequestEntry?");// a définir dans le future si besoin
 					msgSend.addReceiver(new AID(msg.getSender().getLocalName(),AID.ISLOCALNAME));
 					((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
@@ -61,6 +61,7 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 				}
 				//2) attente de la réponse
 				if(this.respondEnterCoalition && msgRequest != null) {
+					System.out.println("test");
 					//2)a) je rentre dans la coalition
 					if (!msgRequest.getContent().equals("no")) {
 						//TODO rentré dans coalition
