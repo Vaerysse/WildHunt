@@ -38,9 +38,9 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 		//System.out.println("Coucou, tu veux voir ma b.... belle reception de message de SayGolem?");
 	
 		//2)if msg no null and is not the same agent
-		if ((msg != null) && !(msg.getSender().getLocalName().equals(this.myAgent.getLocalName()))){
+		if ((msg != null) && !(msg.getSender().getLocalName().equals(this.myAgent.getLocalName()))) {
 			// agent is in a coalition?
-			if(!((ExploreSoloAgent)this.myAgent).getInCoalition()) {
+			if(!((ExploreSoloAgent)this.myAgent).getInCoalition()) { // si l'agent n'est pas dans une coalition
 				((ExploreSoloAgent)this.myAgent).setMoving(false);
 				//1) je demande de rentrer dans la coalition
 				if (this.requestEnterCoalition){
@@ -49,13 +49,13 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 					msgSend.setSender(this.myAgent.getAID());
 					msgSend.setProtocol(msg.getContent());
 					msgSend.setContent("RequestEntry?");// a définir dans le future si besoin
-					msgSend.addReceiver(new AID(msg.getSender().getLocalName(),AID.ISLOCALNAME));
+					msgSend.addReceiver(new AID(msg.getSender().getLocalName(), AID.ISLOCALNAME));
 					((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
 					this.requestEnterCoalition = false;
 					this.respondEnterCoalition = true;
 					this.timer = System.currentTimeMillis();
 					if (log) {
-						System.out.println(this.myAgent.getLocalName() + ": I want to enter in the coalition ");
+						System.out.println(this.myAgent.getLocalName() + ": I want to enter the coalition ");
 					}
 						
 				}
@@ -69,14 +69,14 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 						this.respondEnterCoalition = false;
 						((ExploreSoloAgent)this.myAgent).setInCoalition(true);
 						if (log) {
-							System.out.println(this.myAgent.getLocalName() + ": enter in the coalition ");
+							System.out.println(this.myAgent.getLocalName() + ": enters the coalition ");
 						}
 					}
 					else {//2)b) je ne rentre pas dans la coalition
 						this.requestEnterCoalition = true;
 						this.respondEnterCoalition = false;
 						if (log) {
-							System.out.println(this.myAgent.getLocalName() + ": Reject enter in the coalition ");
+							System.out.println(this.myAgent.getLocalName() + ": Reject enters the coalition ");
 						}
 					}
 				}
@@ -88,10 +88,22 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 					}
 				}
 			}
-			else {
+			else { // si l'agent est dans une coalition
 				// coalition full?
-				if(!((ExploreSoloAgent)this.myAgent).getInCoalitionFull()) {
+				if(!((ExploreSoloAgent)this.myAgent).getInCoalitionFull()) { // coalition pas full
+					
 					((ExploreSoloAgent)this.myAgent).setMoving(false);
+					
+					// ouais en fait je comprends rien lol
+					// si la coalition est pas remplie mais que l'agent est déjà dedans, ben il se tait juste non ?!
+					// la question qui se pose c'est est-ce qu'il est dans la même coalition que l'agent ayant émis le message ?
+					// mais dans ce cas j'ai besoin d'avoir accès aux coalitions et là ce n'est pas le cas ?!
+					// dc en fait faudrait stocker l'id de sa coalition au niveau de l'agent aussi
+					// MON CERVEAU PART DANS TOUS LES SENS ET J'ARRIVE A RIEN
+					// et dans le code plus haut, à aucun moment on n'ajoute d'agents à des coalitions
+					
+					
+					
 					//TODO reflexion laura
 				}
 			}

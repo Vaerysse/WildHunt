@@ -36,8 +36,10 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 
 		this.id_Coal = id;
 		this.members.put(this.myAgent.getLocalName(),"Leader");
-		//TODO definir nombre agent max dans coalition
-		this.maxAgent = 4;
+		
+		// Nombre agent max dans coalition
+		this.maxAgent = ((ExploreSoloAgent)this.myAgent).getMap().getMaxDegree(); // degré max du graphe
+		//this.maxAgent = ((ExploreSoloAgent)this.myAgent).getMap().getAvDegree(); // degré moyen du graphe
 		
 	}
 	
@@ -62,7 +64,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	public void addAgentCoalition(ACLMessage msg) {
 		if(this.members.size() < this.maxAgent) {
 			System.out.println("envoi message coalition ok");
-			ACLMessage msgRespond=new ACLMessage(ACLMessage.INFORM);
+			ACLMessage msgRespond = new ACLMessage(ACLMessage.INFORM);
 			msgRespond.setSender(this.myAgent.getAID());
 			msgRespond.setProtocol("AnswerEntry");
 			msgRespond.setContent("ok");
@@ -71,7 +73,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		}
 		else {
 			System.out.println("envoi message coalition non");
-			ACLMessage msgRespond=new ACLMessage(ACLMessage.INFORM);
+			ACLMessage msgRespond = new ACLMessage(ACLMessage.INFORM);
 			msgRespond.setSender(this.myAgent.getAID());
 			msgRespond.setProtocol("AnswerEntry");
 			msgRespond.setContent("no");
