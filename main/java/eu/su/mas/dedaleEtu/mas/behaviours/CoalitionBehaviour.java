@@ -29,7 +29,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	private List<String> members = new ArrayList <String> ();
 	private int maxAgent;
 	private boolean candidatAgentOpen;
-	private String golemLocalitation;
+	private String golemLocalisation;
 	private int stepMSG;
 	private int numUpdate;
 	private String fatherLastMSG;
@@ -159,7 +159,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		ACLMessage msgRespond = new ACLMessage(ACLMessage.INFORM);
 		msgRespond.setSender(this.myAgent.getAID());
 		msgRespond.setProtocol(this.id_Coal + ": nb Agent");
-		msgRespond.setContent(this.golemLocalitation);
+		msgRespond.setContent(this.golemLocalisation);
 		msgRespond.addReceiver(new AID(msg.getSender().getLocalName(),AID.ISLOCALNAME));
 		((AbstractDedaleAgent)this.myAgent).sendMessage(msgRespond);
 	}
@@ -218,9 +218,9 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		updatemaxAgent.add(""+this.candidatAgentOpen);
 		update.put("candidatAgentOpen", updatecandidatAgentOpen);
 
-		List<String> updategolemLocalitation = new ArrayList<String>();
-		updatemaxAgent.add(""+this.golemLocalitation);
-		update.put("golemLocalitation", updategolemLocalitation);
+		List<String> updategolemLocalisation = new ArrayList<String>();
+		updatemaxAgent.add(""+this.golemLocalisation);
+		update.put("golemLocalisation", updategolemLocalisation);
 
 		List<String> updatestepMSG = new ArrayList<String>();
 		updatemaxAgent.add(""+this.stepMSG);
