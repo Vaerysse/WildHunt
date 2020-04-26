@@ -177,7 +177,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		this.inCoalitionFull = value;
 	}
 	
-	public boolean leaderCoalition() {
+	public boolean getLeaderCoalition() {
 		return this.leaderCoalition;
 	}
 	
@@ -195,6 +195,15 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	
 	public String idBehaviourCreation() {
 		Random rand = new Random();
-		return "C" + rand.nextInt(max_rand); //id creation
+		this.coalitionId = "C" + rand.nextInt(max_rand); //id creation
+		return this.coalitionId;
+	}
+	
+	public void setIDCoalition(String idcoal) {
+		this.coalitionId = idcoal;
+	}
+	
+	public String getIDCoalition() {
+		return this.coalitionId;
 	}
 }

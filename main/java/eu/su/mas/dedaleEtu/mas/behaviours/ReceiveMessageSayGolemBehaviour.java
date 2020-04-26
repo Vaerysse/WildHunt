@@ -16,6 +16,7 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 	private long timer;
 	private boolean requestEnterCoalition = true;
 	private boolean respondEnterCoalition = false;
+	private String IDCoalition; 
 	
 	public ReceiveMessageSayGolemBehaviour(final Agent myagent) {
 		super(myagent);
@@ -46,9 +47,10 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 				//1) je demande de rentrer dans la coalition
 				if (this.requestEnterCoalition){
 					// Sending a message to ask for the opening of a private channel
+					this.IDCoalition = msg.getContent();
 					ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
 					msgSend.setSender(this.myAgent.getAID());
-					msgSend.setProtocol(msg.getContent());
+					msgSend.setProtocol(this.IDCoalition);
 					msgSend.setContent("RequestEntry?");// a définir dans le future si besoin
 					msgSend.addReceiver(new AID(msg.getSender().getLocalName(), AID.ISLOCALNAME));
 					((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
@@ -64,11 +66,11 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 				if(this.respondEnterCoalition && msgRequest != null) {
 					System.out.println("test send msgRequest");
 					//2)a) je rentre dans la coalition
-					if (!msgRequest.getContent().equals("no")) {
-						//TODO rentré dans coalition
-						//ajout behaviour coalition
+					if (!msgRequest.getContent().equals("no")) {						
+						this.myAgent.addBehaviour(new CoalitionBehaviour( this.myAgent, this.IDCoalition)); //open behaviour special coalition
 						this.respondEnterCoalition = false;
 						((ExploreSoloAgent)this.myAgent).setInCoalition(true);
+						((ExploreSoloAgent)this.myAgent).setIDCoalition(this.IDCoalition);
 						if (log) {
 							System.out.println(this.myAgent.getLocalName() + ": enters the coalition ");
 						}
@@ -91,37 +93,19 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 			}
 			else { // si l'agent est dans une coalition
 				
-				// On vérifie que l'agent n'est pas déjà dans la coalition de l'émetteur
-				// (s'il est dans la même coalition, il ne doit pas répondre)
-				if (!((ExploreSoloAgent)this.myAgent).getCoalitionId().equals(msg.getContent())) {
-					
-					// pourquoi on stocke tout au niveau de l'agent ?
-					// une fois qu'on a l'id de la coalition, pourquoi les méthodes genre coalition full et tout ne sont pas
-					// directement dans Coalition ? (en passant l'id en paramètre)
-					// (une partie de mon cerveau me dit mais Lauraaaaaaaa, en POO on peut pas faire çaaaaaaa, mais j'arrive pas à voir pourquoi lol)
-					
-					// comme on a dit, on part du principe que la coalition de l'émetteur n'est pas full, quitte à retirer des gens ensuite ?
-					// dc pas besoin de check l'état de la coalition de l'émetteur
-					
-					
-					// coalition de l'agent pas full
-					if(!((ExploreSoloAgent)this.myAgent).getInCoalitionFull()) {
-						
-						((ExploreSoloAgent)this.myAgent).setMoving(false);	
-					
-					
-					
-					
-					}
-					
-					// coalition de l'agent full
-					else {
-						
+				if(msg != null){
+					// On vérifie que l'agent n'est pas déjà dans la coalition de l'émetteur
+					// (s'il est dans la même coalition, il ne doit pas répondre)
+					//Si ce n'est pas la même coalition et qu'il est leader
+					if (!((ExploreSoloAgent)this.myAgent).getCoalitionId().equals(msg.getContent()) && ((ExploreSoloAgent)this.myAgent).getLeaderCoalition()) {
+						// envoie de la localiation du golem
+						// message retour: regarder si même golem
+							// si mêeme golem					
+							//envoie de nombre de personne dans ma coalition 
+							//message retour
+								// si fusion possible
 						
 					}
-				
-									
-	
 				}
 			}
 		}
