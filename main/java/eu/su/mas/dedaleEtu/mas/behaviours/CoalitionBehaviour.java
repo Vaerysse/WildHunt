@@ -1,9 +1,10 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.io.IOException;
-
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import dataStructures.serializableGraph.SerializableSimpleGraph;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
@@ -25,10 +26,14 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	private static final int wait = 2000;
 	private String id_Coal;
 	
-	private HashMap<String, String> members = new HashMap<String, String>();
+	private List<String> members = new ArrayList <String> ();
 	private int maxAgent;
 	private boolean candidatAgentOpen;
 	private String golemLocalitation;
+	private int stepMSG;
+	private int numUpdate;
+	private String fatherLastMSG;
+	private List<String> sonLastMSG = new ArrayList<String>();
 	
 	
 	private long timer;
@@ -37,8 +42,10 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		super(myagent);
 
 		this.id_Coal = id;
-		this.members.put(this.myAgent.getLocalName(),"Leader");
+		this.members.add(this.myAgent.getLocalName());
 		this.candidatAgentOpen = true;
+		this.stepMSG = 1;
+		this.numUpdate = 0;
 		
 		// Nombre agent max dans coalition
 		this.maxAgent = ((ExploreSoloAgent)this.myAgent).getMap().getMaxDegree(); // degré max du graphe
@@ -66,6 +73,11 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 
 		final ACLMessage msgnbAgent = this.myAgent.receive(msgTemplatenbAgent);	
 		
+		final MessageTemplate msgTemplatenUpdate = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
+				MessageTemplate.MatchProtocol(this.id_Coal + ": Update behaviour"));			
+
+		final ACLMessage msgUpdate = this.myAgent.receive(msgTemplatenUpdate);	
+		
 		
 		// partie réservé au leader
 		if (((ExploreSoloAgent)this.myAgent).getLeaderCoalition()){
@@ -92,7 +104,8 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 				//si la coalition est pleine
 				if (this.members.size() >= this.maxAgent) {
 					//TODO
-					//stop message sayGolem (envoi à tous les agent aussi)
+					// update donnée map et envoie coalition
+					//supprimé behaviour SayGolem (et passer l'info au autre membre de la coalition) 
 					//lancer calcule pour choper le golem (calcule fait dans l'agent leader) (envoie de la possition à chaque agent)
 				}
 			}
@@ -101,6 +114,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			}
 		}	
 		//TODO
+		//je recoit une update des données du behaviour 
 		//je reçoit un message du leader a transmetre à mes fils (dans la coalition)
 		//je reçoit un message du leader qui me donne un position pour choper le golem (et donner leur position à mes fils)
 		//je recoit un message de mon fils de coalition
@@ -119,7 +133,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		if(this.members.size() < this.maxAgent) {
 			System.out.println("envoi message coalition ok");
 			msgRespond.setContent("ok");
-			this.members.put(msg.getSender().getLocalName(),"Other");
+			this.members.add(msg.getSender().getLocalName());
 		}
 		else {
 			System.out.println("envoi message coalition non");
@@ -148,6 +162,75 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		msgRespond.setContent(this.golemLocalitation);
 		msgRespond.addReceiver(new AID(msg.getSender().getLocalName(),AID.ISLOCALNAME));
 		((AbstractDedaleAgent)this.myAgent).sendMessage(msgRespond);
+	}
+	
+	//envoie message string a une liste spécifique d'agent
+	private void sendMessageStringCoalition(String protocol, List<String> agents, String content) {
+		ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
+		msgSend.setSender(this.myAgent.getAID());
+		msgSend.setProtocol(protocol);
+		msgSend.setContent(content);
+		
+		for(int i = 0; i< agents.size(); i++) {
+			msgSend.addReceiver(new AID(agents.get(i),AID.ISLOCALNAME));
+		}
+		
+		((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
+		
+	}
+	
+	//envoie message object a une liste spécifique d'agent
+	private void sendMessageStringCoalition(String protocol, List<String> agents, Object content) {
+		ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
+		msgSend.setSender(this.myAgent.getAID());
+		msgSend.setProtocol(protocol);
+		try {
+			msgSend.setContentObject((Serializable) content);
+		} catch (IOException e) {
+			msgSend.setContent("-1");
+			System.out.println("Send message problem");
+			e.printStackTrace();
+		}
+		
+		for(int i = 0; i< agents.size(); i++) {
+			msgSend.addReceiver(new AID(agents.get(i),AID.ISLOCALNAME));
+		}
+		
+		((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
+		
+	}
+	
+	//permet de définir ou mettre les agents pour capturer le golem
+	private void calculPositionCaptureGolem() {
+		
+	}
+	
+	//envoie la mise a jours des données du behaviour
+	private void sendUpdateDataBehaviour() {
+		HashMap<String, List <String>> update = new HashMap<String, List <String>>();
+		update.put("members", this.members);
+		
+		List<String> updatemaxAgent = new ArrayList<String>();
+		updatemaxAgent.add(""+this.maxAgent);
+		update.put("maxAgent", updatemaxAgent);
+		
+		List<String> updatecandidatAgentOpen = new ArrayList<String>();
+		updatemaxAgent.add(""+this.candidatAgentOpen);
+		update.put("candidatAgentOpen", updatecandidatAgentOpen);
+
+		List<String> updategolemLocalitation = new ArrayList<String>();
+		updatemaxAgent.add(""+this.golemLocalitation);
+		update.put("golemLocalitation", updategolemLocalitation);
+
+		List<String> updatestepMSG = new ArrayList<String>();
+		updatemaxAgent.add(""+this.stepMSG);
+		update.put("stepMSG", updatestepMSG);
+		
+		List<String> updatenumUpdate = new ArrayList<String>();
+		updatemaxAgent.add(""+this.numUpdate);
+		update.put("numUpdate", updatenumUpdate);
+		
+		this.sendMessageStringCoalition(this.id_Coal + ": Update behaviour", this.members, update);
 	}
 	
 	public boolean done() {

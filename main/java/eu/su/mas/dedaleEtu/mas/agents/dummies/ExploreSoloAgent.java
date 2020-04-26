@@ -206,4 +206,5 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	public String getIDCoalition() {
 		return this.coalitionId;
 	}
+	
 }

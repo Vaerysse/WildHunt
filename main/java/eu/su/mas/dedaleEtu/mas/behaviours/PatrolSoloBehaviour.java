@@ -15,7 +15,6 @@ import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import jade.core.Agent;
 import jade.core.behaviours.SimpleBehaviour;
-import eu.su.mas.dedaleEtu.princ.Coalition;
 
 public class PatrolSoloBehaviour extends SimpleBehaviour{
 
