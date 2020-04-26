@@ -62,23 +62,21 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	}
 	
 	public void addAgentCoalition(ACLMessage msg) {
+		ACLMessage msgRespond = new ACLMessage(ACLMessage.INFORM);
+		msgRespond.setSender(this.myAgent.getAID());
+		msgRespond.setProtocol("AnswerEntry");
 		if(this.members.size() < this.maxAgent) {
 			System.out.println("envoi message coalition ok");
-			ACLMessage msgRespond = new ACLMessage(ACLMessage.INFORM);
-			msgRespond.setSender(this.myAgent.getAID());
-			msgRespond.setProtocol("AnswerEntry");
 			msgRespond.setContent("ok");
-			msgRespond.addReceiver(new AID(msg.getSender().getLocalName(),AID.ISLOCALNAME));
 			this.members.put(msg.getSender().getLocalName(),"Other");
 		}
 		else {
 			System.out.println("envoi message coalition non");
-			ACLMessage msgRespond = new ACLMessage(ACLMessage.INFORM);
-			msgRespond.setSender(this.myAgent.getAID());
-			msgRespond.setProtocol("AnswerEntry");
 			msgRespond.setContent("no");
-			msgRespond.addReceiver(new AID(msg.getSender().getLocalName(),AID.ISLOCALNAME));
 		}
+		msgRespond.addReceiver(new AID(msg.getSender().getLocalName(),AID.ISLOCALNAME));
+		((AbstractDedaleAgent)this.myAgent).sendMessage(msgRespond);
+		
 	}
 	
 	

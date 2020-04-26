@@ -38,9 +38,10 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 		//System.out.println("Coucou, tu veux voir ma b.... belle reception de message de SayGolem?");
 	
 		//2)if msg no null and is not the same agent
-		if ((msg != null) && !(msg.getSender().getLocalName().equals(this.myAgent.getLocalName()))) {
+		if ( (msgRequest != null) || ((msg != null) && !(msg.getSender().getLocalName().equals(this.myAgent.getLocalName())))) {
 			// agent is in a coalition?
 			if(!((ExploreSoloAgent)this.myAgent).getInCoalition()) { // si l'agent n'est pas dans une coalition
+				if((msg != null)) {
 				((ExploreSoloAgent)this.myAgent).setMoving(false);
 				//1) je demande de rentrer dans la coalition
 				if (this.requestEnterCoalition){
@@ -58,10 +59,10 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 						System.out.println(this.myAgent.getLocalName() + ": I want to enter the coalition ");
 					}
 						
-				}
+				}}
 				//2) attente de la réponse
 				if(this.respondEnterCoalition && msgRequest != null) {
-					System.out.println("test");
+					System.out.println("test send msgRequest");
 					//2)a) je rentre dans la coalition
 					if (!msgRequest.getContent().equals("no")) {
 						//TODO rentré dans coalition
