@@ -41,6 +41,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	private boolean inCoalition = false;
 	private boolean inCoalitionFull = false;
 	private boolean leaderCoalition = false;
+	private String coalitionId;
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -49,7 +50,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	 *	 		2) add the behaviours
 	 *          
 	 */
-	protected void setup(){
+	protected void setup() {
 
 		super.setup();
 		
@@ -182,6 +183,14 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	
 	public void leaderCoalition(boolean value) {
 		this.leaderCoalition = value;
+	}
+	
+	public String getCoalitionId() {
+		return this.coalitionId;
+	}
+	
+	public void setCoalitionId(String id) {
+		this.coalitionId = id;
 	}
 	
 	public String idBehaviourCreation() {

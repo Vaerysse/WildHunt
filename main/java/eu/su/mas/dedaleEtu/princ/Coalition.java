@@ -7,7 +7,7 @@ import java.util.HashMap;
 
 public class Coalition {
 
-	private int id;
+	private String id;
 	
 	/**
 	 * Chaque agent possède un rôle au sein de la coalition, représenté par un entier :
@@ -33,7 +33,7 @@ public class Coalition {
 	// une méthode add/deleteMembers si on en a besoin
 	
 	
-	public int getID() {
+	public String getID() {
 		return this.id;
 	}
 	

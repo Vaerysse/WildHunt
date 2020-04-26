@@ -90,22 +90,38 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 				}
 			}
 			else { // si l'agent est dans une coalition
-				// coalition full?
-				if(!((ExploreSoloAgent)this.myAgent).getInCoalitionFull()) { // coalition pas full
+				
+				// On vérifie que l'agent n'est pas déjà dans la coalition de l'émetteur
+				// (s'il est dans la même coalition, il ne doit pas répondre)
+				if (!((ExploreSoloAgent)this.myAgent).getCoalitionId().equals(msg.getContent())) {
 					
-					((ExploreSoloAgent)this.myAgent).setMoving(false);
+					// pourquoi on stocke tout au niveau de l'agent ?
+					// une fois qu'on a l'id de la coalition, pourquoi les méthodes genre coalition full et tout ne sont pas
+					// directement dans Coalition ? (en passant l'id en paramètre)
+					// (une partie de mon cerveau me dit mais Lauraaaaaaaa, en POO on peut pas faire çaaaaaaa, mais j'arrive pas à voir pourquoi lol)
 					
-					// ouais en fait je comprends rien lol
-					// si la coalition est pas remplie mais que l'agent est déjà dedans, ben il se tait juste non ?!
-					// la question qui se pose c'est est-ce qu'il est dans la même coalition que l'agent ayant émis le message ?
-					// mais dans ce cas j'ai besoin d'avoir accès aux coalitions et là ce n'est pas le cas ?!
-					// dc en fait faudrait stocker l'id de sa coalition au niveau de l'agent aussi
-					// MON CERVEAU PART DANS TOUS LES SENS ET J'ARRIVE A RIEN
-					// et dans le code plus haut, à aucun moment on n'ajoute d'agents à des coalitions
+					// comme on a dit, on part du principe que la coalition de l'émetteur n'est pas full, quitte à retirer des gens ensuite ?
+					// dc pas besoin de check l'état de la coalition de l'émetteur
 					
 					
+					// coalition de l'agent pas full
+					if(!((ExploreSoloAgent)this.myAgent).getInCoalitionFull()) {
+						
+						((ExploreSoloAgent)this.myAgent).setMoving(false);	
 					
-					//TODO reflexion laura
+					
+					
+					
+					}
+					
+					// coalition de l'agent full
+					else {
+						
+						
+					}
+				
+									
+	
 				}
 			}
 		}
