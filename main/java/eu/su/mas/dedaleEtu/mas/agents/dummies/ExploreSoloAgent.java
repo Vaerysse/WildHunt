@@ -181,18 +181,10 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		return this.leaderCoalition;
 	}
 	
-	public void leaderCoalition(boolean value) {
+	public void setLeaderCoalition(boolean value) {
 		this.leaderCoalition = value;
 	}
-	
-	public String getCoalitionId() {
-		return this.coalitionId;
-	}
-	
-	public void setCoalitionId(String id) {
-		this.coalitionId = id;
-	}
-	
+		
 	public String idBehaviourCreation() {
 		Random rand = new Random();
 		this.coalitionId = "C" + rand.nextInt(max_rand); //id creation

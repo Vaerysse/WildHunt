@@ -98,9 +98,9 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 				if (!((ExploreSoloAgent)this.myAgent).isInPursuit()) { // si je ne suis pas déjà entrain de poursuivre un golem
 					//JE LANCE LA PROCEDURE DE COALITION + ATTRAPAGE DE GOLEM MOUHAHAHAHAHA
 					System.out.println("GOLEM - " + this.myAgent.getLocalName());
-					((ExploreSoloAgent)this.myAgent).setInPursuit(true);// je passe ne mode poursuite
-					((ExploreSoloAgent)this.myAgent).leaderCoalition(true);//je devient leader de ma coalition
-					String id_Behaviour = ((ExploreSoloAgent)this.myAgent).idBehaviourCreation();//je creer un identifiant de coalition
+					((ExploreSoloAgent)this.myAgent).setInPursuit(true);// je passe en mode poursuite
+					((ExploreSoloAgent)this.myAgent).setLeaderCoalition(true);//je deviens leader de ma coalition
+					String id_Behaviour = ((ExploreSoloAgent)this.myAgent).idBehaviourCreation();//je crée un identifiant de coalition
 					this.myAgent.addBehaviour(new CoalitionBehaviour(((ExploreSoloAgent)this.myAgent), id_Behaviour));//je lance le behaviour de coalition
 					this.myAgent.addBehaviour(new SayGolem(((ExploreSoloAgent)this.myAgent), id_Behaviour));
 				}
