@@ -84,7 +84,8 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 					node_sent.add(ID_node);
 					// je mets a jour le noeud pour dire que je le sens
 					//System.out.println("J'attends les ordres !!!");
-					//System.out.println("je sens");
+					//System.out.println("je sens");				
+					//TODO se depalcer sur la case ou je le sent(pour sentir ou il se déplace si il se déplace)
 					this.myMap.setGolemDetection(ID_node, true, myPosition);
 				}
 				else {

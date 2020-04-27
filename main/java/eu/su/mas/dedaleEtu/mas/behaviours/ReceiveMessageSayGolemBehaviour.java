@@ -1,5 +1,10 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
 import jade.core.AID;
@@ -57,7 +62,14 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 					ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
 					msgSend.setSender(this.myAgent.getAID());
 					msgSend.setProtocol(msg.getContent());
-					msgSend.setContent("RequestEntry?");// a définir dans le future si besoin
+					List <String> data = new ArrayList <String> ();
+					data.add(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+					try {
+						msgSend.setContentObject((Serializable) data);// envois ça position (list)
+					} catch (IOException e) {
+						System.out.println("problem send list for entry coalition");
+						e.printStackTrace();
+					}
 					msgSend.addReceiver(new AID(msg.getSender().getLocalName(), AID.ISLOCALNAME));
 					((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
 					this.requestEnterCoalition = false;

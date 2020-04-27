@@ -27,7 +27,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	private static final int wait = 2000;
 	private String id_Coal;//id de la coalition (utilisé pour les echange de message)
 	
-	private List<String> members = new ArrayList <String> ();
+	private HashMap<String, List <String>> members = new HashMap <String, List <String>> ();
 	private int maxAgent;//max agent possible dans la coalition (dans update)
 	private boolean candidatAgentOpen;// de nouveau agent peuvent entré dans la coalition (dans update)
 	private String golemLocalisation;//ou se situe le plus probablement le golem pisté par la coalistion (dans update)
@@ -39,6 +39,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	private boolean waitDataGolemAllAgent;//variable a true tant que tous les agents de la coalition non pas envoyé leur données sur la vision du golem (propre au leader)
 	private HashMap<String, Double> dataPositionGolem;//stocke les valeur de position probable du golem envoyer par chaque agent (stack les valeurs de même position) (propre au leader)
 	private List<String> waitAgentDataReturn = new ArrayList <String> ();//list des agents dont on attend la réponse (propre au leader)
+	private HashMap <String, String> positionAgent;
 	
 	private long timer;
 	
@@ -46,7 +47,9 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		super(myagent);
 
 		this.id_Coal = id;
-		this.members.add(this.myAgent.getLocalName());
+		List <String> dataMyAgent = new ArrayList<String>();
+		dataMyAgent.add(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+		this.members.put(this.myAgent.getLocalName(), dataMyAgent);
 		this.candidatAgentOpen = true;
 		this.stepMSG = 1;
 		this.numUpdate = 0;
@@ -149,8 +152,8 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 							data = new HashMap <String, String> ();
 							data.put("data", "-1");
 						}
-						//si il y a des donnée valable
-						if(!data.get("data").equals("-1")){
+						//si il y a des donnée valable pour la chasse au golem
+						if(data.get("data").equals("1")){
 							//faire une boucle sur les key pour récupéré les double (sous forme de string) a intégré a chaque noeud
 							for(String nodeID : data.keySet()) {
 								//permet de prendre uniquement les id node
@@ -166,13 +169,13 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 				//si plus de message en attente on calcule ou peut se trouver le golem
 				if(!waitDataGolemAllAgent) {
 					//definir ou se trouve le golem et mettre a jour
-					//TODO
+					this.golemLocalisation = this.bestPositionGolem();
 					//envoie de l'update du behaviour
 					this.sendUpdateDataBehaviour();
 					//calcule de la postion a donnée a chaque agent
-					//TODO
+					this.calculPositionCaptureGolem();
 					//envoie de la position que doit avoir les agents pour capturer le golem
-					//TODO
+					this.sendPositionAgentHuntGolem();
 				}
 			}
 		}
@@ -207,7 +210,12 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 				System.out.println("envoi message coalition ok");
 			}
 			msgRespond.setContent("ok");
-			this.members.add(msg.getSender().getLocalName());
+			try {
+				this.members.put(msg.getSender().getLocalName(), (List<String>) msg.getContentObject());
+			} catch (UnreadableException e) {
+				System.out.println("Problem reception agent data for entry coalition");
+				e.printStackTrace();
+			}
 		}//sinon si pleine
 		else {
 			if(log) {
@@ -240,19 +248,19 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	}
 	
 	//envoie message string a une liste spécifique d'agent
-	private void sendMessageStringCoalition(String protocol, List<String> agents, String content) {
+	private void sendMessageStringCoalition(String protocol, HashMap <String, List <String>> agents, String content) {
 		ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
 		msgSend.setSender(this.myAgent.getAID());
 		msgSend.setProtocol(protocol);
 		msgSend.setContent(content);		
-		for(int i = 0; i< agents.size(); i++) {
-			msgSend.addReceiver(new AID(agents.get(i),AID.ISLOCALNAME));
+		for(String agent : agents.keySet()) {
+			msgSend.addReceiver(new AID(agent, AID.ISLOCALNAME));
 		}		
 		((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);		
 	}
 	
 	//envoie message object a une liste spécifique d'agent
-	private void sendMessageObjectCoalition(String protocol, List<String> agents, Object content) {
+	private void sendMessageObjectCoalition(String protocol, HashMap <String, List <String>> agents, Object content) {
 		ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
 		msgSend.setSender(this.myAgent.getAID());
 		msgSend.setProtocol(protocol);
@@ -263,15 +271,66 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			System.out.println("Send message problem");
 			e.printStackTrace();
 		}		
-		for(int i = 0; i< agents.size(); i++) {
-			msgSend.addReceiver(new AID(agents.get(i),AID.ISLOCALNAME));
+		for(String agent : agents.keySet()) {
+			msgSend.addReceiver(new AID(agent, AID.ISLOCALNAME));
 		}		
 		((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);		
 	}
 	
 	//permet de définir ou mettre les agents pour capturer le golem
 	private void calculPositionCaptureGolem() {
-		//TODO
+		// definir les voisins du noeud ou on pense ou se trouve le golem
+		List <String> neighborNodeGolem = ((ExploreSoloAgent)this.myAgent).getMap().neighborNode(golemLocalisation);
+		//repartir les noeuds entre les agents de la liste en définissant le chemin le plus court pour chacun
+		//copy de la list des agent pour éviter de donnée 2 noeud à un même agent
+		List <String> copyMembers = new ArrayList <String> ();
+		for(String agent : this.members.keySet()) {
+			copyMembers.add(agent);
+		}	
+		this.positionAgent = new HashMap <String, String> ();
+		//pour chaque noeud
+		for(int i = 0; i < neighborNodeGolem.size(); i++ ) {
+			//regarder quel agent est le plus proche
+			String bestAgent = "";
+			int distancePath = 100000;
+				//tester si liste vide
+			if(!copyMembers.isEmpty()) {
+				List <String> path;
+				for(int j= 0; j < copyMembers.size(); j++) {
+					path = ((ExploreSoloAgent)this.myAgent).getMap().getShortestPath(this.members.get(copyMembers.get(j)).get(0),neighborNodeGolem.get(i));//definit le meilleur chemin entre la  position de l'agent et le noeud à aller
+					if(path.size() < distancePath) {
+						distancePath = path.size();
+						bestAgent = copyMembers.get(j);
+					}
+				}
+				copyMembers.remove(bestAgent);
+				this.positionAgent.put(bestAgent, neighborNodeGolem.get(i));
+			}		
+		}	
+	}
+	
+	//envoie de la position au agent de la coalition
+	private void sendPositionAgentHuntGolem() {
+		//on ajout le numéro de message
+		this.positionAgent.put("Step", "" + this.stepMSG);
+		this.positionAgent.put("data","2");
+		//on envoie le message
+		this.sendMessageObjectCoalition(this.id_Coal + ": golem hunt strat", this.members, this.positionAgent);
+		//on incremente l'étape de chasse
+		this.stepMSG++;
+	}
+	
+	//determine quelle node a la meilleur "proba" de contenir le golem
+	private String bestPositionGolem() {
+		String bestNode = "";
+		Double proba = 0.0;
+		for(String nodeID : this.dataPositionGolem.keySet()) {
+			if(this.dataPositionGolem.get(nodeID) > proba) {
+				proba = this.dataPositionGolem.get(nodeID);
+				bestNode = nodeID;
+			}
+		}
+		return bestNode;
 	}
 	
 	//ajoute un noeud et une valeur dans dataPositionGolem
@@ -321,7 +380,6 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	//envoie la mise a jours des données du behaviour
 	private void sendUpdateDataBehaviour() {
 		HashMap<String, List <String>> update = new HashMap<String, List <String>>();
-		update.put("members", this.members);
 		
 		List<String> updatemaxAgent = new ArrayList<String>();
 		updatemaxAgent.add(""+this.maxAgent);
