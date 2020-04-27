@@ -29,18 +29,19 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 		//1) receive the message
 		final MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 															MessageTemplate.MatchProtocol("GolemFoundProtocol"));			
-
 		final ACLMessage msg = this.myAgent.receive(msgTemplate); // id de la coalition de l'émetteur
 		
 		final MessageTemplate msgTemplateRequest = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 															MessageTemplate.MatchProtocol("AnswerEntry"));			
-
 		final ACLMessage msgRequest = this.myAgent.receive(msgTemplateRequest);
 		
 		final MessageTemplate msgTemplateSameGolem = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 														MessageTemplate.MatchProtocol(msg.getContent() + ": golem position"));			
-
 		final ACLMessage msgSameGolem = this.myAgent.receive(msgTemplateSameGolem);
+		
+		final MessageTemplate msgTemplatenbAgent = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
+														MessageTemplate.MatchProtocol(msg.getContent() + ": nb Agent"));			
+		final ACLMessage msgnbAgent = this.myAgent.receive(msgTemplatenbAgent);	
 	
 		//System.out.println("Coucou, tu veux voir ma b.... belle reception de message de SayGolem?");
 	
@@ -96,9 +97,13 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 					}
 				}
 			}
-			else { // si l'agent est dans une coalition
+			
+			// si l'agent est dans une coalition non remplie
+			else if (((ExploreSoloAgent)this.myAgent).getInCoalition() && !((ExploreSoloAgent)this.myAgent).getInCoalitionFull()) {
 				
-				if (msg != null && this.sendGolemPosition) {
+				String golemPosition = ""; // TODO: remplacer par la méthode permettant d'obtenir l'info
+				
+				if (msg != null) {
 					
 					// On vérifie que l'agent n'est pas déjà dans la coalition de l'émetteur
 					// (s'il est dans la même coalition, il ne doit pas répondre)
@@ -111,55 +116,48 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
                     	ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
     					msgSend.setSender(this.myAgent.getAID());
     					msgSend.setProtocol(msg.getContent() + ": golem position");
-    					String golemPosition = ""; // TODO: remplacer par la méthode permettant d'obtenir l'info
     					msgSend.setContent(golemPosition); 
     					msgSend.addReceiver(new AID(msg.getSender().getLocalName(), AID.ISLOCALNAME));
     					((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
-    					this.sendGolemPosition = false;
-    					this.sendCoalitionSize = true;
     					//this.timer = System.currentTimeMillis();
     					if (log) {
     						System.out.println(this.myAgent.getLocalName() + ": sending my golem position " + golemPosition);
     					}
-             
-    					//2) Message retour
-    					//msgSameGolem
-    						//regarder si même golem
-                            // si mêeme golem                    
-                            //envoie de nombre de personne dans ma coalition 
-                            //message retour
-                                // si fusion possible
-                    	
-                    	
-                    	
-                    	
-						 
-						// en théorie, si les agents sont tous les 2 dans une coalition différente, c'est que au moins 2 agents ont vu un golem
-						// la question est : est-ce que c'est le même golem ? Comment obtenir cette information
-						// si oui, il faut fusionner les coalitions afin d'en avoir au moins une de remplie
-						// sinon ?
-						
-						
-						
-						
-						// coalition de l'agent pas full
-						if(!((ExploreSoloAgent)this.myAgent).getInCoalitionFull()) {
-							
-							((ExploreSoloAgent)this.myAgent).setMoving(false);	
-						
-						
-						
-						
-						}
-						
-						// coalition de l'agent full
-						else {
-							
-							
-							
-						}
                     }
 				}
+				
+				//2) Message retour sur le golem
+				if (msgSameGolem != null) {
+									
+					// On regarde si les deux coalitions sont sur le même golem
+					if (msgSameGolem.getContent().equals(golemPosition)) {
+						// Si oui, envoi du nb de personnes dans la coalition de l'agent afin que 
+						// l'émetteur détermine si l'on fusionne les 2 coalitions
+						
+						ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
+    					msgSend.setSender(this.myAgent.getAID());
+    					msgSend.setProtocol(msg.getContent() + ": nb Agent");
+    					String nbAgents = ""; // TODO: remplacer par la méthode permettant d'obtenir l'info
+    					msgSend.setContent(nbAgents); 
+    					msgSend.addReceiver(new AID(msg.getSender().getLocalName(), AID.ISLOCALNAME));
+    					((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
+    					//this.timer = System.currentTimeMillis();
+    					if (log) {
+    						System.out.println(this.myAgent.getLocalName() + ": sending the size of my coalition " + nbAgents);
+    					}
+					}    	
+				}
+				
+				//3) Message retour sur le nb d'agents dans la coalition
+				if (msgnbAgent != null) {
+					
+					  	
+				}    	
+                    	
+						 
+						
+					
+                 
 			}
 		}
 		
