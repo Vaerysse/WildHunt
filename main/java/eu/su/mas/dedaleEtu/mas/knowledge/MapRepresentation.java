@@ -393,6 +393,7 @@ public class MapRepresentation implements Serializable {
 		}
 	}
 	
+	//prend un node ou l'on sent le golem en paramétre est répartie le pourcentage de trouver le golem su rses voisins (en ométent le noeud sur lequel se trouve l'agent)
 	public void sentGolem(String ID_node, String myPosition) {
 		//liste des noeuds autour du noeud où l'on sent
 		List<String> node_arround = this.neighborNode(ID_node);
@@ -419,6 +420,8 @@ public class MapRepresentation implements Serializable {
 		}
 	}
 	
+	//precise sur le noeud que l'on sent ou non le golem
+	//puis défini la proba d'avoir un golem sur se noeud et ses voisins
 	public void setGolemDetection(String ID_node, boolean sent, String myPosition) {
 		this.g.getNode(ID_node).setAttribute("golem_scent", sent);
 		if(!sent) {
@@ -435,6 +438,20 @@ public class MapRepresentation implements Serializable {
 			//sinon calcule de proba
 			this.sentGolem(ID_node, myPosition);
 		}
+	}
+	
+	//renvoie la liste des noeuds que l'agent à déterminer comme possible de trouver un golem ainsi que ça "poba" asocier
+	public HashMap <String, Double> listNodeGolemProba(){
+		HashMap <String, Double> nodeProba = new HashMap <String, Double> ();		
+		Iterator<Node> iter = this.g.iterator();
+		while(iter.hasNext()){
+			Node n=iter.next();
+			if((Double) n.getAttribute("proba_golem_present") > 0.0) {
+				nodeProba.put(n.getId(), (Double)n.getAttribute("proba_golem_present"));
+			}
+		}
+		
+		return nodeProba;
 	}
 	
 	/**
