@@ -232,6 +232,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		((AbstractDedaleAgent)this.myAgent).sendMessage(msgRespond);	
 	}	
 	
+	//TODO : inversion des protocoles ac la fonction d'en dessous
 	//envoie du nombre d'agent dans la coalition
 	private void nbAgentCoalition(ACLMessage msg) {
 		ACLMessage msgRespond = new ACLMessage(ACLMessage.INFORM);

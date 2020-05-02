@@ -49,43 +49,48 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 		final ACLMessage msgnbAgent = this.myAgent.receive(msgTemplatenbAgent);	
 	
 		//System.out.println("Coucou, tu veux voir ma b.... belle reception de message de SayGolem?");
-	
+			
+		
 		//2)if msg no null and is not the same agent
 		if ((msgRequest != null) || ((msg != null) && !(msg.getSender().getLocalName().equals(this.myAgent.getLocalName())))) {
+			
 			// agent is in a coalition?
 			if (!((ExploreSoloAgent)this.myAgent).getInCoalition()) { // si l'agent n'est pas dans une coalition
+				
 				if (msg != null) {
 				((ExploreSoloAgent)this.myAgent).setMoving(false);
-				//1) je demande de rentrer dans la coalition
-				if (this.requestEnterCoalition){
-					// Sending a message to ask for the opening of a private channel
-					ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
-					msgSend.setSender(this.myAgent.getAID());
-					msgSend.setProtocol(msg.getContent());
-					List <String> data = new ArrayList <String> ();
-					data.add(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
-					try {
-						msgSend.setContentObject((Serializable) data);// envois ça position (list)
-					} catch (IOException e) {
-						System.out.println("problem send list for entry coalition");
-						e.printStackTrace();
+				
+					//1) je demande de rentrer dans la coalition
+					if (this.requestEnterCoalition){
+						// Sending a message to ask for the opening of a private channel
+						ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
+						msgSend.setSender(this.myAgent.getAID());
+						msgSend.setProtocol(msg.getContent());
+						List <String> data = new ArrayList <String> ();
+						data.add(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+						try {
+							msgSend.setContentObject((Serializable) data);// envoie sa position (list)
+						} catch (IOException e) {
+							System.out.println("problem send list for entry coalition");
+							e.printStackTrace();
+						}
+						msgSend.addReceiver(new AID(msg.getSender().getLocalName(), AID.ISLOCALNAME));
+						((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
+						this.requestEnterCoalition = false;
+						this.respondEnterCoalition = true;
+						this.timer = System.currentTimeMillis();
+						if (log) {
+							System.out.println(this.myAgent.getLocalName() + ": I want to enter the coalition ");
+						}	
 					}
-					msgSend.addReceiver(new AID(msg.getSender().getLocalName(), AID.ISLOCALNAME));
-					((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
-					this.requestEnterCoalition = false;
-					this.respondEnterCoalition = true;
-					this.timer = System.currentTimeMillis();
-					if (log) {
-						System.out.println(this.myAgent.getLocalName() + ": I want to enter the coalition ");
-					}
-						
-				}}
+				}
+				
 				//2) attente de la réponse
 				if (this.respondEnterCoalition && msgRequest != null) {
 					System.out.println("test send msgRequest");
 					//2)a) je rentre dans la coalition
 					if (!msgRequest.getContent().equals("no")) {
-						//TODO rentré dans coalition
+						//TODO rentrer dans la coalition
 						//ajout behaviour coalition
 						this.respondEnterCoalition = false;
 						((ExploreSoloAgent)this.myAgent).setInCoalition(true);
@@ -108,7 +113,7 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 						System.out.println(this.myAgent.getLocalName() + ": timeOut enter in the coalition ");
 					}
 				}
-			}
+			}			
 			
 			// si l'agent est dans une coalition non remplie
 			else if (((ExploreSoloAgent)this.myAgent).getInCoalition() && !((ExploreSoloAgent)this.myAgent).getInCoalitionFull()) {
@@ -121,9 +126,7 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 					// (s'il est dans la même coalition, il ne doit pas répondre)
 					// Si ce n'est pas la même coalition et qu'il est leader
                     if (!((ExploreSoloAgent)this.myAgent).getIDCoalition().equals(msg.getContent()) && ((ExploreSoloAgent)this.myAgent).getLeaderCoalition()) {
-						
-                    	int maxDegree = ((ExploreSoloAgent)this.myAgent).getMap().getMaxDegree(); // maximal degree of the graph
-                    	
+						                    	
                     	//1) Envoi de la localisation du golem
                     	ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
     					msgSend.setSender(this.myAgent.getAID());
@@ -143,13 +146,13 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 									
 					// On regarde si les deux coalitions sont sur le même golem
 					if (msgSameGolem.getContent().equals(golemPosition)) {
-						// Si oui, envoi du nb de personnes dans la coalition de l'agent afin que 
-						// l'émetteur détermine si l'on fusionne les 2 coalitions
+						// Si oui, envoi du nb de personnes dans la coalition de l'agent afin 
+						// de déterminer si l'on fusionne les 2 coalitions
 						
 						ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
     					msgSend.setSender(this.myAgent.getAID());
     					msgSend.setProtocol(msg.getContent() + ": nb Agent");
-    					String nbAgents = ""; // TODO: remplacer par la méthode permettant d'obtenir l'info
+    					String nbAgents = String.valueOf(((ExploreSoloAgent)this.myAgent).getCoalitionSize()); 
     					msgSend.setContent(nbAgents); 
     					msgSend.addReceiver(new AID(msg.getSender().getLocalName(), AID.ISLOCALNAME));
     					((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
@@ -157,21 +160,66 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
     					if (log) {
     						System.out.println(this.myAgent.getLocalName() + ": sending the size of my coalition " + nbAgents);
     					}
-					}    	
+					} 
+					
+					else { // les 2 coalitions ne sont pas sur le même golem
+						// TODO définir ce que l'on fait
+						// ex si avDegree atteignable pr chaque coalition, on fait ça
+						// sinon on remplie une des 2 coalitions au détriment d'une autre
+						
+					}
 				}
 				
 				//3) Message retour sur le nb d'agents dans la coalition
 				if (msgnbAgent != null) {
 					
-					  	
+					int myCoalSize = ((ExploreSoloAgent)this.myAgent).getCoalitionSize();
+					int otherCoalSize = Integer.parseInt(msgnbAgent.getContent());
+					
+					// Récupération du critère de fusion des coalitions
+					int criteria = ((ExploreSoloAgent)this.myAgent).getMap().getMaxDegree(); // degré max du graphe
+					//int criteria = ((ExploreSoloAgent)this.myAgent).getMap().getAvDegree(); // degré moyen du graphe
+					
+					if (myCoalSize + otherCoalSize <= criteria) { // juste assez d'agents pour faire une coalition
+						// On fusionne les deux coalitions
+						// On se base sur l'ordre lexicographique pour savoir quelle coalition absorbe l'autre
+						
+						String myAID = String.valueOf(this.myAgent.getAID());
+						String otherAID = String.valueOf(this.myAgent.getAID());
+						
+						if (myAID.compareTo(otherAID) <= 0) {
+							// TODO: On dissout la coalition et tout le monde passe chez l'autre coalition
+						}
+						else {
+							// TODO: on prévient l'autre leader qu'il doit dissoudre sa coalition
+						}	
+					}
+					
+					else { // suffisamment d'agents pour faire 2 coalitions, dont une remplie
+						
+						// On remplit d'abord la plus pleine afin de limiter les transferts d'agents
+						if (myCoalSize >= otherCoalSize) { // c'est ma coalition la plus pleine et je vais récupérer des agents
+							int nbTransferedAgents = criteria-myCoalSize;
+							// TODO: envoyer un message au leader pour lui dire de transférer nbTransferedAgents agents
+							
+						}
+						else { // ma coalition doit transférer des agents dans l'autre coalition
+							int nbTransferedAgents = criteria-otherCoalSize;
+							// TODO: prévenir nbTransferedAgents de changer de coalition
+						}
+						
+					}
+					
+					
+			
 				}    	
                     	
 						 
-						
+			}
 					
                  
-			}
 		}
+		
 		
 	}
 

@@ -40,8 +40,10 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	private String lastVisitedNode = "";
 	private boolean inCoalition = false;
 	private boolean inCoalitionFull = false;
-	private boolean leaderCoalition = false;
+	private boolean leaderCoalition = false; // TODO: est-ce qu'on a vraiment besoin de garder ça maintenant qu'on a le leader directement ac leaderAID
 	private String coalitionId;
+	private String leaderAID = ""; // identifiant du leader
+	private int coalitionSize = 1; // taille de la coalition 
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -197,6 +199,22 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	
 	public String getIDCoalition() {
 		return this.coalitionId;
+	}
+	
+	public void setLeaderAID(String leaderAID) {
+		this.leaderAID = leaderAID;
+	}
+	
+	public String getLeaderAID() {
+		return this.leaderAID;
+	}
+	
+	public void setCoalitionSize(int nbAgents) {
+		this.coalitionSize = nbAgents;
+	}
+	
+	public int getCoalitionSize() {
+		return this.coalitionSize;
 	}
 	
 }
