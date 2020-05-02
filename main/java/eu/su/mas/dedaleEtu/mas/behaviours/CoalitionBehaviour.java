@@ -48,6 +48,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 
 		this.id_Coal = id;
 		List <String> dataMyAgent = new ArrayList<String>();
+		dataMyAgent.add("Leader");
 		dataMyAgent.add(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
 		this.members.put(this.myAgent.getLocalName(), dataMyAgent);
 		this.candidatAgentOpen = true;
@@ -158,7 +159,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 							for(String nodeID : data.keySet()) {
 								//permet de prendre uniquement les id node
 								if(nodeID != "data" && nodeID != "agent") {
-									this.addValueDataPositionGolem(nodeID,(Double) parseDouble(data.get(nodeID)));
+									this.addValueDataPositionGolem(nodeID, Double.parseDouble(data.get(nodeID)));
 								}
 							}
 						}
@@ -178,26 +179,30 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 					this.sendPositionAgentHuntGolem();
 				}
 			}
+		}//non leader
+		else {
+			//je recoit une update des données du behaviour (penser a sup say golem si candidatAgentOpen=false)
+			if(msgUpdate != null) {
+				this.receivedUpdateDataBehaviour(msgUpdate);
+			}
+			//je reçoit un message du leader qui me donne un position pour choper le golem 
+			if(msgGolemHuntStrat != null) {
+				this.receivePositionCatchGolem(msgGolemHuntStrat);		
+			}
 		}
 		
 		//Autre agent et leader	
 		//TODO
-		//je recoit une update des données du behaviour (penser a sup say golem si candidatAgentOpen=false)
-		//je reçoit un message du leader a transmetre à mes fils (dans la coalition)
-		//je reçoit un message du leader qui me donne un position pour choper le golem (et donner leur position à mes fils)
-		//je recoit un message de mon fils de coalition
-		//je recoit un message une demande de rentré dans la coalition (a transmetre à mon leader/pére)			
-		//je recoit de mon fils les données ou il seent le golem (transmetre au leader/pére)
-		//je recoit de mon fils qu'il est arriver en position X (transmetre au leader/pére)
+		//je recoit un message de mon fils de coalition		
 		//je transmet au leader/pére là ou je sent le golem
 		//je transmet ma position au leader/pére
+		//je recoit un message une demande de rentré dans la coalition (a transmetre à mon leader/pére)
+		//je recoit de mon fils les données ou il sent le golem (transmetre au leader/pére)
+		//je recoit de mon fils qu'il est arriver en position X (transmetre au leader/pére)
+		// recoit une demande d'entré dans la coalition, l'envoie au leader
 		
 	}
-	
-	private Double parseDouble(String string) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+
 
 	//ajout d'un agent dans la coalition
 	private  void addAgentCoalition(ACLMessage msg) {
@@ -297,7 +302,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			if(!copyMembers.isEmpty()) {
 				List <String> path;
 				for(int j= 0; j < copyMembers.size(); j++) {
-					path = ((ExploreSoloAgent)this.myAgent).getMap().getShortestPath(this.members.get(copyMembers.get(j)).get(0),neighborNodeGolem.get(i));//definit le meilleur chemin entre la  position de l'agent et le noeud à aller
+					path = ((ExploreSoloAgent)this.myAgent).getMap().getShortestPath(this.members.get(copyMembers.get(j)).get(1),neighborNodeGolem.get(i));//definit le meilleur chemin entre la  position de l'agent et le noeud à aller
 					if(path.size() < distancePath) {
 						distancePath = path.size();
 						bestAgent = copyMembers.get(j);
@@ -392,17 +397,69 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		List<String> updategolemLocalisation = new ArrayList<String>();
 		updatemaxAgent.add(""+this.golemLocalisation);
 		update.put("golemLocalisation", updategolemLocalisation);
-
-		List<String> updatestepMSG = new ArrayList<String>();
-		updatemaxAgent.add(""+this.stepMSG);
-		update.put("stepMSG", updatestepMSG);
 		
-		this.numUpdate += 1;
+		this.numUpdate ++;
 		List<String> updatenumUpdate = new ArrayList<String>();
 		updatemaxAgent.add(""+this.numUpdate);
 		update.put("numUpdate", updatenumUpdate);
 		
 		this.sendMessageObjectCoalition(this.id_Coal + ": Update behaviour", this.members, update);
+	}
+	
+	//reception dee la mise a jours est envoie en ping pour si agent de coalition non a porter du leader
+	private void receivedUpdateDataBehaviour(ACLMessage msg) {
+		HashMap<String, List <String>> update;
+		try {
+			update = (HashMap<String, List<String>>) msg.getContentObject();
+		} catch (UnreadableException e) {
+			System.out.println("Problem reception update");
+			update = new HashMap<String, List <String>> ();
+			List <String> temp = new ArrayList <String> ();
+			temp.add("-1");
+			update.put("numUpdate", temp);
+			e.printStackTrace();
+		}
+		
+		//si le numéro d'update est supérieur au dernier update
+		if(Integer.parseInt(update.get(numUpdate).get(0)) > this.numUpdate) {
+			//envoie du message pour agent plus loin (ping)
+			this.sendMessageObjectCoalition(msg.getProtocol(), this.members, update);
+			
+			//MAJ DATA
+			this.maxAgent = Integer.parseInt(update.get("maxAgent").get(0));
+			this.candidatAgentOpen = Boolean.parseBoolean(update.get("candidatAgentOpen").get(0));
+			this.golemLocalisation = update.get("golemLocalisation").get(0);
+			this.numUpdate = Integer.parseInt(update.get("numUpdate").get(0));
+			
+		}
+	}
+	
+	private void receivePositionCatchGolem(ACLMessage msg) {
+		HashMap <String, String> allPosition;
+		try {
+			allPosition =(HashMap<String, String>) msg.getContentObject();
+		} catch (UnreadableException e) {
+			allPosition = new HashMap <String, String> ();
+			e.printStackTrace();
+		}
+		//si nouvelle étape de positionnement
+		if((Integer.parseInt(allPosition.get("Step")) > this.stepMSG) && (Integer.parseInt(allPosition.get("data")) == 2)) {
+			//envoie du message pour agent plus loin (ping)
+			this.sendMessageObjectCoalition(msg.getProtocol(), this.members, allPosition);
+			//je regarde ou me positionner
+			String newPosition = allPosition.get(this.myAgent.getLocalName());
+			//je lance le calcule du chemin pour la nouvelle position et mis rend
+			this.followPathNewPosition(newPosition);
+		}
+	}
+	
+	private void followPathNewPosition(String node) {
+		// en établie le meilleur chemin
+		List <String> path = ((ExploreSoloAgent)this.myAgent).getMap().getShortestPath(((AbstractDedaleAgent)this.myAgent).getCurrentPosition() , node);	
+		//on fait bouger l'agent jusqu'à là bas
+		for(int i = 0; i < path.size(); i++) {
+			((AbstractDedaleAgent)this.myAgent).moveTo(path.get(i));
+		}
 	}
 	
 	//demande aux autre agents ou ils sentent le golem
