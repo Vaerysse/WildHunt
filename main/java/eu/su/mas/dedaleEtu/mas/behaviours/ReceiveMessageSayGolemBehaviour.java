@@ -124,20 +124,28 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 					
 					// On vérifie que l'agent n'est pas déjà dans la coalition de l'émetteur
 					// (s'il est dans la même coalition, il ne doit pas répondre)
-					// Si ce n'est pas la même coalition et qu'il est leader
-                    if (!((ExploreSoloAgent)this.myAgent).getIDCoalition().equals(msg.getContent()) && ((ExploreSoloAgent)this.myAgent).getLeaderCoalition()) {
-						                    	
-                    	//1) Envoi de la localisation du golem
-                    	ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
-    					msgSend.setSender(this.myAgent.getAID());
-    					msgSend.setProtocol(msg.getContent() + ": golem position");
-    					msgSend.setContent(golemPosition); 
-    					msgSend.addReceiver(new AID(msg.getSender().getLocalName(), AID.ISLOCALNAME));
-    					((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
-    					//this.timer = System.currentTimeMillis();
-    					if (log) {
-    						System.out.println(this.myAgent.getLocalName() + ": sending my golem position " + golemPosition);
-    					}
+					// Si ce n'est pas la même coalition
+                    if (!((ExploreSoloAgent)this.myAgent).getIDCoalition().equals(msg.getContent())) {
+						
+                    	if (((ExploreSoloAgent)this.myAgent).getLeaderCoalition()) { // s'il est leader de sa coalition
+	                    	//1) Envoi de la localisation du golem
+	                    	ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
+	    					msgSend.setSender(this.myAgent.getAID());
+	    					msgSend.setProtocol(msg.getContent() + ": golem position");
+	    					msgSend.setContent(golemPosition); 
+	    					msgSend.addReceiver(new AID(msg.getSender().getLocalName(), AID.ISLOCALNAME));
+	    					((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
+	    					//this.timer = System.currentTimeMillis();
+	    					if (log) {
+	    						System.out.println(this.myAgent.getLocalName() + ": sending my golem position " + golemPosition);
+	    					}
+                    	}
+                    	
+                    	else { // s'il n'est pas leader de sa coalition
+                    		
+                    		// TODO: transmettre le message à son leader
+                    		// en fonction de si le leader a déjà reçu le sayGolem, se positionner en relais
+                    	}
                     }
 				}
 				
@@ -189,9 +197,11 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 						
 						if (myAID.compareTo(otherAID) <= 0) {
 							// TODO: On dissout la coalition et tout le monde passe chez l'autre coalition
+							// on doit a priori passer par le CoalitionBehaviour pour faire ça...
 						}
 						else {
 							// TODO: on prévient l'autre leader qu'il doit dissoudre sa coalition
+							// créer un protocole de communication pour ce message et le rajouter dans CoalitionBehaviour
 						}	
 					}
 					
@@ -201,11 +211,12 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 						if (myCoalSize >= otherCoalSize) { // c'est ma coalition la plus pleine et je vais récupérer des agents
 							int nbTransferedAgents = criteria-myCoalSize;
 							// TODO: envoyer un message au leader pour lui dire de transférer nbTransferedAgents agents
-							
+							// créer un protocole de communication pour ce message et le rajouter dans CoalitionBehaviour
 						}
 						else { // ma coalition doit transférer des agents dans l'autre coalition
 							int nbTransferedAgents = criteria-otherCoalSize;
 							// TODO: prévenir nbTransferedAgents de changer de coalition
+							// voir comment CoalitionBehaviour détermine quels agents doivent migrer, proximité géographique ? ordre lexico ?
 						}
 						
 					}
