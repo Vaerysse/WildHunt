@@ -91,8 +91,9 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		this.golemCatch = false;
 		
 		// Nombre agent max dans coalition
-		this.maxAgent = ((ExploreSoloAgent)this.myAgent).getMap().getMaxDegree(); // degré max du graphe
+		//this.maxAgent = ((ExploreSoloAgent)this.myAgent).getMap().getMaxDegree(); // degré max du graphe
 		//this.maxAgent = ((ExploreSoloAgent)this.myAgent).getMap().getAvDegree(); // degré moyen du graphe
+		this.maxAgent = 2; //pour test
 		
 		
 	}
@@ -155,20 +156,32 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		if (((ExploreSoloAgent)this.myAgent).getLeaderCoalition()){
 			//de nouveau agent peuvent encore venir dans la coalition
 			if(this.candidatAgentOpen) {
-				if(msgEnterCoalition != null) {
+				if(msgEnterCoalition != null && !msgEnterCoalition.getSender().getLocalName().equals(this.myAgent.getAID().getLocalName())) {									
+					if(log) {
+					System.out.println("Reception d'une demande d'entré dans la coalition");
+					}
 					//reception d'une demande d'entré dans la coalition
 						this.addAgentCoalition(msgEnterCoalition);
 				}			
 				//reception d'une demande de localisation de golem
-				if (msgGolemPosition != null) {
+				if (msgGolemPosition != null && !msgGolemPosition.getSender().getLocalName().equals(this.myAgent.getAID().getLocalName())) {
+					if(log) {
+						System.out.println("Reception d'une demande de localisation du golem");
+					}
 					this.golemPosition(msg);
 				}			
 				//reception d'une demande de nombre d'agent
-				if (msgnbAgent != null) {
+				if (msgnbAgent != null && !msgnbAgent.getSender().getLocalName().equals(this.myAgent.getAID().getLocalName())) {
+					if(log) {
+						System.out.println("Reception d'une demande du nombre d'agent dans la coalition");
+					}
 					this.nbAgentCoalition(msg);
 				}			
 				//si la coalition est pleine
 				if (this.members.size() >= this.maxAgent) {
+					if(log) {
+						System.out.println("La coalition est pleine.");
+					}
 					//on ferme le droit d'inscription
 					this.candidatAgentOpen = false;
 					((ExploreSoloAgent)this.myAgent).setInCoalitionFull(true);
@@ -179,7 +192,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 				}
 			}//si pas de nouveau possible dans la coalition on passe en chasse
 			else {
-				if(msgGolemHuntStrat != null) {
+				if(msgGolemHuntStrat != null && !msgGolemHuntStrat.getSender().getLocalName().equals(this.myAgent.getAID().getLocalName())) {
 					//si l'on attend des data d'agent concernant la position du golem
 					if(waitDataGolemAllAgent) {
 						//traitement des messages reçues
@@ -198,6 +211,9 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 							for(String nodeID : data.keySet()) {
 								//permet de prendre uniquement les id node
 								if(nodeID != "data" && nodeID != "agent") {
+									if(log) {
+										System.out.println("Le leader regarde les données de localisation de golem envoyer par un agent : " + nodeID + " , " + data.get(nodeID));
+									}
 									this.addValueDataPositionGolem(nodeID, Double.parseDouble(data.get(nodeID)));
 								}
 							}
@@ -213,6 +229,9 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 				}
 				//si plus de message en attente on calcule ou peut se trouver le golem
 				if(!waitDataGolemAllAgent) {
+					if(log) {
+						System.out.println("Plus de donnée de localisation de golem à attendre");
+					}
 					this.huntGolem = true;
 				}
 				if(huntGolem) {
@@ -488,6 +507,14 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			e.printStackTrace();
 		}
 		
+		if(log) {
+			System.out.println("Reception de l'udpdate : ");
+			System.out.println("Num : " + update.get("numUpdate").get(0));
+			System.out.println("MaxAgent : " + update.get("maxAgent").get(0));
+			System.out.println("candidatAgentOpen : " + update.get("candidatAgentOpen").get(0));
+			System.out.println("golemLocalisation : " + update.get("golemLocalisation").get(0));
+		}
+		
 		//si le numéro d'update est supérieur au dernier update
 		if(Integer.parseInt(update.get(numUpdate).get(0)) > this.numUpdate) {
 			//envoie du message pour agent plus loin (ping)
@@ -510,6 +537,12 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			request = new HashMap <String, String> ();
 			e.printStackTrace();
 		}		
+		
+		if(log) {
+			System.out.println("Demande de donnée pour la localisation du golem :");
+			System.out.println("Step :" + request.get("Step"));
+		}
+		
 		if((Integer.parseInt(request.get("Step")) > this.stepMSG) && (Integer.parseInt(request.get("data")) == 1)) {
 			//brodcast le message
 			this.sendMessageObjectCoalition(msg.getProtocol(), this.members, request);
@@ -521,20 +554,31 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 				for(String node : data_Position_Golem.keySet()) {
 					data_Position_Golem_send.put(node, "" + data_Position_Golem.get(node));
 				}		
+				if(log) {
+					System.out.println("Demande de donnée pour la localisation du golem : data à envoyé : " + data_Position_Golem_send);
+				}
 			}			
 			data_Position_Golem_send.put("data", "1");
 			data_Position_Golem_send.put("agent", this.myAgent.getLocalName());
+			if(log) {
+				System.out.println("Demande de donnée pour la localisation du golem : envoie : " + data_Position_Golem_send);
+			}
 			this.sendMessageObjectCoalition(msg.getProtocol(), this.members, data_Position_Golem);
 		}
 		
 	}
 	
 	private void receivePositionCatchGolem(ACLMessage msg) {
+		if(log) {
+			System.out.println("Reception position pour attraper le golem :");
+		}
 		HashMap <String, String> allPosition;
 		try {
 			allPosition =(HashMap<String, String>) msg.getContentObject();
 		} catch (UnreadableException e) {
 			allPosition = new HashMap <String, String> ();
+			allPosition.put("Step", "0");
+			allPosition.put("data", "-1");
 			e.printStackTrace();
 		}
 		//si nouvelle étape de positionnement
@@ -547,6 +591,10 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			this.huntGolem = true;
 			//je lance le calcule du chemin pour la nouvelle position et mis rend
 			this.followPathNewPosition(this.goPosition);//vérifier si fait un chemin entier ou juste case par case
+			
+			if(log) {
+				System.out.println("Reception position pour attraper le golem : nouvelle posittion : " + this.goPosition);
+			}
 		}
 	}
 	
