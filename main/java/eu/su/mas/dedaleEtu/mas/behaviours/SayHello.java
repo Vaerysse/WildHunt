@@ -45,6 +45,8 @@ public class SayHello extends TickerBehaviour{
 
 			msg.addReceiver(new AID("Explo1",AID.ISLOCALNAME));
 			msg.addReceiver(new AID("Explo2",AID.ISLOCALNAME));
+			msg.addReceiver(new AID("Explo3", AID.ISLOCALNAME));
+			msg.addReceiver(new AID("Explo4", AID.ISLOCALNAME));
 
 			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);

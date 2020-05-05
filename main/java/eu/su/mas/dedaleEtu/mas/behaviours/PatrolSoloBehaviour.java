@@ -94,43 +94,47 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 				}
 			}
 			this.myMap.setNodeSmell(node_sent);
-			//3) si j'ai senti un golem
-			if(Golem_Present) {
-				if (!((ExploreSoloAgent)this.myAgent).isInPursuit()) { // si je ne suis pas déjà entrain de poursuivre un golem
-					//JE LANCE LA PROCEDURE DE COALITION + ATTRAPAGE DE GOLEM MOUHAHAHAHAHA
-					System.out.println("GOLEM - " + this.myAgent.getLocalName());
-					((ExploreSoloAgent)this.myAgent).setInPursuit(true);// je passe en mode poursuite
-					((ExploreSoloAgent)this.myAgent).setLeaderCoalition(true);//je deviens leader de ma coalition
-					String id_Behaviour = ((ExploreSoloAgent)this.myAgent).idBehaviourCreation();//je crée un identifiant de coalition
-					this.myAgent.addBehaviour(new CoalitionBehaviour(((ExploreSoloAgent)this.myAgent), id_Behaviour));//je lance le behaviour de coalition
-					this.myAgent.addBehaviour(new SayGolem(((ExploreSoloAgent)this.myAgent), id_Behaviour));
-				}
-				else {
-					System.out.println("Je poursuis déjà - " + this.myAgent.getLocalName());
-				}
-				
+			//3) si j'ai senti un golem ou que je suis danss une coalition
+			if(((ExploreSoloAgent)this.myAgent).isInPursuit()) {
+				Golem_Present = true;
 			}
-			else{//3) sinon calcule objectif et chemin (si besoin)
-				this.bestPath = this.myMap.bestReward(lobs);
-				//System.out.println("New objectif : " + this.bestPath);
-
-
-				//4) move
-				//is agent move is true
-				if (((ExploreSoloAgent) this.myAgent).isMoving()){
-					//on enregistre le dernier noeud où on était avant de bouger
-					((ExploreSoloAgent)this.myAgent).setLastVisitedNode(myPosition);
-					//si l'agent n'est pas a destination
-					//System.out.println(this.myAgent.getLocalName() + " my position : " + myPosition + ", je doit aller en : " + this.bestPath);
-					((AbstractDedaleAgent)this.myAgent).moveTo(this.bestPath);//agent move 1 node
-					//si agent bloqué
-					if(myPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
-						Random rand = new Random();
-						int nb = rand.nextInt(lobs.size());
-						//System.out.println(this.myAgent.getLocalName() + " moveTo : " + lobs.get(nb).getLeft());						
-						((AbstractDedaleAgent)this.myAgent).moveTo(lobs.get(nb).getLeft().toString());
+			if(!((ExploreSoloAgent)this.myAgent).isInPursuit()) {
+				if(Golem_Present ) {
+					if (!((ExploreSoloAgent)this.myAgent).isInPursuit()) { // si je ne suis pas déjà entrain de poursuivre un golem
+						//JE LANCE LA PROCEDURE DE COALITION + ATTRAPAGE DE GOLEM MOUHAHAHAHAHA
+						System.out.println("GOLEM - " + this.myAgent.getLocalName());
+						((ExploreSoloAgent)this.myAgent).setInPursuit(true);// je passe en mode poursuite
+						((ExploreSoloAgent)this.myAgent).setLeaderCoalition(true);//je deviens leader de ma coalition
+						String id_Behaviour = ((ExploreSoloAgent)this.myAgent).idBehaviourCreation();//je crée un identifiant de coalition
+						this.myAgent.addBehaviour(new CoalitionBehaviour(((ExploreSoloAgent)this.myAgent), id_Behaviour));//je lance le behaviour de coalition
+						this.myAgent.addBehaviour(new SayGolem(((ExploreSoloAgent)this.myAgent), id_Behaviour));
 					}
-				}	
+					else {
+						System.out.println("Je poursuis déjà - " + this.myAgent.getLocalName());
+					}
+
+				}
+				else{//3) sinon calcule objectif et chemin (si besoin)
+					this.bestPath = this.myMap.bestReward(lobs);
+					//System.out.println("New objectif : " + this.bestPath);
+
+
+					//4) move
+					//is agent move is true
+					if (((ExploreSoloAgent) this.myAgent).isMoving() && !((ExploreSoloAgent)this.myAgent).isInPursuit()){
+						//on enregistre le dernier noeud où on était avant de bouger
+						((ExploreSoloAgent)this.myAgent).setLastVisitedNode(myPosition);
+						//si l'agent n'est pas a destination
+						//System.out.println(this.myAgent.getLocalName() + " my position : " + myPosition + ", je doit aller en : " + this.bestPath);
+						((AbstractDedaleAgent)this.myAgent).moveTo(this.bestPath);//agent move 1 node
+						//si agent bloqué
+						if(myPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
+							Random rand = new Random();
+							int nb = rand.nextInt(lobs.size());
+							//System.out.println(this.myAgent.getLocalName() + " moveTo : " + lobs.get(nb).getLeft());						
+							((AbstractDedaleAgent)this.myAgent).moveTo(lobs.get(nb).getLeft().toString());
+						}
+					}	
 
 					/**
 					//Delete from the blackList the agent not present into the ray of communication on the previous node
@@ -144,8 +148,9 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 					}
 					((ExploreSoloAgent)this.myAgent).supAgentZoneList();
 					 **/
-				else {
-					//System.out.println("Ho là là, je suis si fatigué!");
+					else {
+						//System.out.println("Ho là là, je suis si fatigué!");
+					}
 				}
 			}
 		}
