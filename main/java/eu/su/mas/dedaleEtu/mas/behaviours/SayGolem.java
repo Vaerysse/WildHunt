@@ -22,7 +22,7 @@ public class SayGolem extends TickerBehaviour{
 	 * @param myPosition the agent's position, when he has detected a golem
 	 */
 	public SayGolem(final Agent myagent, String id_Coal) {
-		super(myagent, 2000); // TODO: ajuster le timer
+		super(myagent, 1000); // TODO: ajuster le timer
 		this.idCoal = id_Coal;
 
 	}

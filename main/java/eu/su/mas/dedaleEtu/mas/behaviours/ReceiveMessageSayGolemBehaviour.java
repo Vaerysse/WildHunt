@@ -23,9 +23,14 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 	private boolean respondEnterCoalition = false;
 	private boolean sendGolemPosition = true;
 	private boolean sendCoalitionSize = false;
+	private String numCoalition;
+	private boolean timerStart;
 	
 	public ReceiveMessageSayGolemBehaviour(final Agent myagent) {
 		super(myagent);
+		
+		this.numCoalition = "C0";
+		this.timerStart = false;
 
 	}
 
@@ -41,11 +46,11 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 		final ACLMessage msgRequest = this.myAgent.receive(msgTemplateRequest);
 		
 		final MessageTemplate msgTemplateSameGolem = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
-														MessageTemplate.MatchProtocol(msg.getContent() + ": golem position"));			
+														MessageTemplate.MatchProtocol(this.numCoalition + ": golem position"));			
 		final ACLMessage msgSameGolem = this.myAgent.receive(msgTemplateSameGolem);
 		
 		final MessageTemplate msgTemplatenbAgent = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
-														MessageTemplate.MatchProtocol(msg.getContent() + ": nb Agent"));			
+														MessageTemplate.MatchProtocol(this.numCoalition + ": nb Agent"));			
 		final ACLMessage msgnbAgent = this.myAgent.receive(msgTemplatenbAgent);	
 	
 		//System.out.println("Coucou, tu veux voir ma b.... belle reception de message de SayGolem?");
@@ -62,12 +67,13 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 				
 					//1) je demande de rentrer dans la coalition
 					if (this.requestEnterCoalition){
+						this.numCoalition = msg.getContent();//eenregistrement de l'identifiant de la coalition
 						// Sending a message to ask for the opening of a private channel
 						ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
 						msgSend.setSender(this.myAgent.getAID());
-						msgSend.setProtocol(msg.getContent());
+						msgSend.setProtocol("Request enttry coalition");
 						List <String> data = new ArrayList <String> ();
-						data.add(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+						data.add(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());//j'ajoute ma position pour que la coalition sache ou je suis
 						try {
 							msgSend.setContentObject((Serializable) data);// envoie sa position (list)
 						} catch (IOException e) {
@@ -76,9 +82,10 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 						}
 						msgSend.addReceiver(new AID(msg.getSender().getLocalName(), AID.ISLOCALNAME));
 						((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
-						this.requestEnterCoalition = false;
-						this.respondEnterCoalition = true;
-						this.timer = System.currentTimeMillis();
+						this.requestEnterCoalition = false;//pas de nouvelle demande pour entrer dansune coalition
+						this.respondEnterCoalition = true;//attente de la réponse
+						this.timer = System.currentTimeMillis();//lancement u timer pour l'attente de la réponse
+						this.timerStart = true;
 						if (log) {
 							System.out.println(this.myAgent.getLocalName() + ": I want to enter the coalition ");
 						}	
@@ -88,35 +95,39 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 				//2) attente de la réponse
 				if (this.respondEnterCoalition && msgRequest != null) {
 					System.out.println("test send msgRequest");
+					this.respondEnterCoalition = false;//je n'attend plus de réponse
 					//2)a) je rentre dans la coalition
 					if (!msgRequest.getContent().equals("no")) {
-						//TODO rentrer dans la coalition
-						//ajout behaviour coalition
-						this.respondEnterCoalition = false;
-						((ExploreSoloAgent)this.myAgent).setInCoalition(true);
+						//rentrer dans la coalition
+						((ExploreSoloAgent)this.myAgent).entreNewCoalition(this.numCoalition);
+						((ExploreSoloAgent)this.myAgent).addBehaviour(new CoalitionBehaviour(this.myAgent, this.numCoalition));
 						if (log) {
 							System.out.println(this.myAgent.getLocalName() + ": enters the coalition ");
 						}
 					}
 					else {//2)b) je ne rentre pas dans la coalition
-						this.requestEnterCoalition = true;
-						this.respondEnterCoalition = false;
+						this.requestEnterCoalition = true;//je repase en mode de demande de rentré dans une coalition
 						if (log) {
 							System.out.println(this.myAgent.getLocalName() + ": Reject enters the coalition ");
 						}
 					}
+					((ExploreSoloAgent)this.myAgent).setMoving(true);
 				}
 				//2)c) timer out			
-				if(System.currentTimeMillis() - this.timer >= wait){
+				if(this.timerStart && System.currentTimeMillis() - this.timer >= wait){
 					((ExploreSoloAgent)this.myAgent).setMoving(true);
 					if (log) {
+						this.requestEnterCoalition = true;//je repase en mode de demande de rentré dans une coalition
+						this.respondEnterCoalition = false;//je n'attend plus de réponse
+						this.timerStart = false;
+						((ExploreSoloAgent)this.myAgent).setMoving(true);
 						System.out.println(this.myAgent.getLocalName() + ": timeOut enter in the coalition ");
 					}
 				}
 			}			
 			
-			// si l'agent est dans une coalition non remplie
-			else if (((ExploreSoloAgent)this.myAgent).getInCoalition() && !((ExploreSoloAgent)this.myAgent).getInCoalitionFull()) {
+			// si l'agent est dans une coalition non remplie et que ce n'est pas un message de ça coalition
+			else if (((ExploreSoloAgent)this.myAgent).getInCoalition() && !((ExploreSoloAgent)this.myAgent).getInCoalitionFull() && !((ExploreSoloAgent)this.myAgent).getIDCoalition().equals(msg.getContent()) ) {
 				
 				String golemPosition = ""; // TODO: remplacer par la méthode permettant d'obtenir l'info
 				

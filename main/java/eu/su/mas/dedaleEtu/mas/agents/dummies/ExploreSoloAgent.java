@@ -6,6 +6,7 @@ import java.util.Random;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
+import eu.su.mas.dedaleEtu.mas.behaviours.CoalitionBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploSoloBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ReceiveMessageBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ReceiveMessageSayGolemBehaviour;
@@ -215,6 +216,12 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	
 	public int getCoalitionSize() {
 		return this.coalitionSize;
+	}
+	
+	public void entreNewCoalition(String numcoal) {
+		this.setInCoalition(true);
+		this.setIDCoalition(numcoal);
+		this.setInPursuit(true);
 	}
 	
 }

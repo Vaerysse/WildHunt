@@ -22,28 +22,46 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	
 	private static final long serialVersionUID = 2L;
 	private boolean finished;
-	private boolean log = false;
+	private boolean log = true;
 	
 	private static final int wait = 2000;
 	private String id_Coal;//id de la coalition (utilisé pour les echange de message)
 	
-	private HashMap<String, List <String>> members = new HashMap <String, List <String>> ();
-	private int maxAgent;//max agent possible dans la coalition (dans update)
-	private boolean candidatAgentOpen;// de nouveau agent peuvent entré dans la coalition (dans update)
-	private String golemLocalisation;//ou se situe le plus probablement le golem pisté par la coalistion (dans update)
-	private int stepMSG;//à quel numéro de message en est la coalition (ordre de placement) (dans update)
-	private int numUpdate;//à quel update en est-on (dans update)
-	private String fatherLastMSG;//quel est mon pére (rien pour le leader) (propre a chaque agent)
-	private List<String> sonLastMSG = new ArrayList<String>();//quel sont mes fils (propre a chaque agent)
-	private long timerWaitMessageCoalition;//temps d'attente max avant de sortir de la coalition si aucun nouveaux messages (propre a chaque agent)
-	private boolean waitDataGolemAllAgent;//variable a true tant que tous les agents de la coalition non pas envoyé leur données sur la vision du golem (propre au leader)
+	//Liste des membre de la coalition avec leurs role, nom et porsition
+	//"Name agent" : ["Role","Position"]
+	private HashMap<String, List <String>> members = new HashMap <String, List <String>> ();//(dans update)
+	//nombre max d'agent possible dans la coalition
+	private int maxAgent;//(dans update)
+	//signale si la coalition est pleine
+	private boolean candidatAgentOpen;// (dans update)
+	//Donne la position la plus probable du golem
+	private String golemLocalisation;//(dans update)
+	//Sert de numérotation pour indiquer l'ordre des message pour les ordres de la coalition (demande de données et ordre de placement)
+	private int stepMSG;
+	//Sert dee numérotation au update envoyer
+	private int numUpdate;//(dans update)
+	//quel est mon pére? (pas uttiliser pour le moment)
+	private String fatherLastMSG;
+	//quel sont mes fils (pas utiliser pour le moment)
+	private List<String> sonLastMSG = new ArrayList<String>();
+	//temps d'attente max avant de sortir de la coalition si aucun nouveaux messages
+	private long timerWaitMessageCoalition;
+	//variable a true tant que tous les agents de la coalition non pas envoyé leur données sur la vision du golem (utiliser par le leader)
+	private boolean waitDataGolemAllAgent;
+	//déclanche la fase de calcule pour attraper le golem et la chasse au golem
 	private boolean huntGolem;
-	private HashMap<String, Double> dataPositionGolem;//stocke les valeur de position probable du golem envoyer par chaque agent (stack les valeurs de même position) (propre au leader)
-	private List<String> waitAgentDataReturn = new ArrayList <String> ();//list des agents dont on attend la réponse (propre au leader)
+	//stocke les valeur de position probable du golem envoyer par chaque agent (stack les valeurs de même position) (utiliser par le leader)
+	private HashMap<String, Double> dataPositionGolem;
+	//list des agents dont on attend la réponse des données sur le golem (utiliser par le leader)
+	private List<String> waitAgentDataReturn = new ArrayList <String> ();
+	//Position données a chaque agent pour attraper le golem (utiliser par le leader)
 	private HashMap <String, String> positionAgent;
+	//hashmap de boolean pour signaler si l'agent est arrivé à la position demander pour attraper le golem (utiliser par le leader)
 	private HashMap <String, Boolean> verificationPositionAgent;
+	//position ou l'agent doit aller (propre a chaque agent)
 	private String goPosition;
-	private Boolean golemCatch;
+	//Signifie si le golem est attraper ou non
+	private Boolean golemCatch;//(dans update)
 	
 	private long timer;
 	
@@ -51,20 +69,24 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		super(myagent);
 
 		this.id_Coal = id;
-		List <String> dataMyAgent = new ArrayList<String>();
-		dataMyAgent.add("Leader");
-		dataMyAgent.add(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
-		this.members.put(this.myAgent.getLocalName(), dataMyAgent);
-		this.candidatAgentOpen = true;
+
 		if(((ExploreSoloAgent)this.myAgent).getLeaderCoalition()) {
+			List <String> dataMyAgent = new ArrayList<String>();
+			dataMyAgent.add("Leader");
+			dataMyAgent.add(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+			this.members.put(this.myAgent.getLocalName(), dataMyAgent);
+			this.candidatAgentOpen = true;
 			this.stepMSG = 1;
+			//commencer à remplir dataPositionGolem
+			this.dataPositionGolem = ((ExploreSoloAgent)this.myAgent).getMap().listNodeGolemProba();
 		}
 		else {
 			this.stepMSG = 0;
 		}
+		
 		this.numUpdate = 0;
 		this.timerWaitMessageCoalition = 10000;
-		this.waitDataGolemAllAgent = false;
+		this.waitDataGolemAllAgent = true;
 		this.huntGolem = false;
 		this.golemCatch = false;
 		
@@ -72,8 +94,6 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		this.maxAgent = ((ExploreSoloAgent)this.myAgent).getMap().getMaxDegree(); // degré max du graphe
 		//this.maxAgent = ((ExploreSoloAgent)this.myAgent).getMap().getAvDegree(); // degré moyen du graphe
 		
-		//commencer à remplir dataPositionGolem
-		this.dataPositionGolem = ((ExploreSoloAgent)this.myAgent).getMap().listNodeGolemProba();
 		
 	}
 	
@@ -87,6 +107,11 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		final MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 				MessageTemplate.MatchProtocol(this.id_Coal));			
 		final ACLMessage msg = this.myAgent.receive(msgTemplate);
+		
+		//Template de reception des demandes pour entré dans la coalition
+		final MessageTemplate msgTemplateEnterCoalition = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
+				MessageTemplate.MatchProtocol("Request enttry coalition"));			
+		final ACLMessage msgEnterCoalition = this.myAgent.receive(msgTemplateEnterCoalition);
 		
 		//Template message concernant la position probable du golem vu par la coalition utilisé actuellement pour:
 		//demander et repondre à la question "Où est le golem?"
@@ -130,11 +155,9 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		if (((ExploreSoloAgent)this.myAgent).getLeaderCoalition()){
 			//de nouveau agent peuvent encore venir dans la coalition
 			if(this.candidatAgentOpen) {
-				if(msg != null) {
+				if(msgEnterCoalition != null) {
 					//reception d'une demande d'entré dans la coalition
-					if (msg.getContent().equals("RequestEntry?")) {
-						this.addAgentCoalition(msg);
-					}
+						this.addAgentCoalition(msgEnterCoalition);
 				}			
 				//reception d'une demande de localisation de golem
 				if (msgGolemPosition != null) {
@@ -181,6 +204,11 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 						}
 						//retirer l'agent de la liste d'attente de retour de donnée
 						this.waitAgentDataReturn.remove(data.get("agent"));
+						
+						//si la liste est vide alors plus de données en attente de reception
+						if(this.waitAgentDataReturn.isEmpty()) {
+							this.waitDataGolemAllAgent = false;
+						}
 					}
 				}
 				//si plus de message en attente on calcule ou peut se trouver le golem
@@ -217,7 +245,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			}
 			
 			//si je suis arriver sur la position que l'on m'a attribuer
-			if(goPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
+			if(this.huntGolem && goPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
 				//envoyer a tous le monde que l'agent est sur position
 				this.sendMessageStringCoalition(this.id_Coal + ": In position", this.members, ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
 			}
@@ -244,19 +272,23 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			if (log) {
 				System.out.println("envoi message coalition ok");
 			}
-			msgRespond.setContent("ok");
 			try {
-				this.members.put(msg.getSender().getLocalName(), (List<String>) msg.getContentObject());
+				List<String> dataAgent = new ArrayList <String> ();
+				dataAgent.add("agent");
+				dataAgent.add(((List<String>) msg.getContentObject()).get(0));
+				this.members.put(msg.getSender().getLocalName(), dataAgent);
+				msgRespond.setContent("ok");
 			} catch (UnreadableException e) {
 				System.out.println("Problem reception agent data for entry coalition");
+				msgRespond.setContent("no");
 				e.printStackTrace();
 			}
 		}//sinon si pleine
 		else {
+			msgRespond.setContent("no");
 			if(log) {
 				System.out.println("envoi message coalition non");
 			}
-			msgRespond.setContent("no");
 		}
 		msgRespond.addReceiver(new AID(msg.getSender().getLocalName(),AID.ISLOCALNAME));
 		((AbstractDedaleAgent)this.myAgent).sendMessage(msgRespond);	
@@ -511,6 +543,8 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			this.sendMessageObjectCoalition(msg.getProtocol(), this.members, allPosition);
 			//je regarde ou me positionner
 			this.goPosition = allPosition.get(this.myAgent.getLocalName());
+			//demarrer la chasse
+			this.huntGolem = true;
 			//je lance le calcule du chemin pour la nouvelle position et mis rend
 			this.followPathNewPosition(this.goPosition);//vérifier si fait un chemin entier ou juste case par case
 		}
