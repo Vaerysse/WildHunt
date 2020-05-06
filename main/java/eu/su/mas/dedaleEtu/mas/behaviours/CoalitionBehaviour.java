@@ -5,6 +5,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 import dataStructures.serializableGraph.SerializableSimpleGraph;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
@@ -27,7 +29,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	private static final int wait = 2000;
 	private String id_Coal;//id de la coalition (utilisé pour les echange de message)
 	
-	//Liste des membre de la coalition avec leurs role, nom et porsition
+	//Liste des membre de la coalition avec leurs role, nom et position
 	//"Name agent" : ["Role","Position"]
 	private HashMap<String, List <String>> members = new HashMap <String, List <String>> ();//(dans update)
 	//nombre max d'agent possible dans la coalition
@@ -159,7 +161,18 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			final MessageTemplate msgTemplateInPosition = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 					MessageTemplate.MatchProtocol(this.id_Coal + ": In position"));			
 			final ACLMessage msgInPosition = this.myAgent.receive(msgTemplateInPosition);
-
+			
+			//Template message pour dire que je dois dissoudre ma coalition et transférer tous mes agents dans une autre coalition
+			final MessageTemplate msgTemplateDissolveAndChangeCoal = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
+					MessageTemplate.MatchProtocol(this.id_Coal + ": dissolve and go to new coalition"));			
+			final ACLMessage msgDissolveAndChangeCoal = this.myAgent.receive(msgTemplateDissolveAndChangeCoal);
+			
+			//Template message pour dire que je dois transférer un certain nombre de mes agents dans une autre coalition
+			final MessageTemplate msgTemplateChangeCoal = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
+					MessageTemplate.MatchProtocol(this.id_Coal + ": change coalition"));			
+			final ACLMessage msgChangeCoal = this.myAgent.receive(msgTemplateChangeCoal);
+			
+			
 
 			// partie réservé au leader
 			if (((ExploreSoloAgent)this.myAgent).getLeaderCoalition()){
@@ -200,6 +213,21 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 						this.giveDataGolem();
 						this.waitDataGolemAllAgent = true;
 					}
+					//réception d'une demande de dissolution et changement de coalition
+					if (msgDissolveAndChangeCoal != null) {
+						this.dissolveAndChangeCoal(msgDissolveAndChangeCoal);
+						if (log) {
+							System.out.println("Reception d'une demande de dissolution de la coalition et de migration vers une autre");
+						}
+					}
+					//réception d'une demande de changement de coalition
+					if (msgChangeCoal != null) {
+						this.changeCoal(msgChangeCoal);
+						if (log) {
+							System.out.println("Reception d'une demande de migration de quelques agents vers une autre coalition");
+						}
+					}
+					
 				}//si pas de nouveau possible dans la coalition on passe en chasse
 				else {
 					if(msgGolemHuntStrat != null) {
@@ -286,6 +314,20 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 					this.receiveRequestGolemPosition(msgGolemHuntStrat);
 					//me dit ou aller
 					this.receivePositionCatchGolem(msgGolemHuntStrat);		
+				}
+				//réception d'une demande de dissolution et changement de coalition
+				if (msgDissolveAndChangeCoal != null) {
+					this.dissolveAndChangeCoal(msgDissolveAndChangeCoal);
+					if (log) {
+						System.out.println("Reception d'une demande de dissolution de la coalition et de migration vers une autre");
+					}
+				}
+				//réception d'une demande de changement de coalition
+				if (msgChangeCoal != null) {
+					this.changeCoal(msgChangeCoal);
+					if (log) {
+						System.out.println("Reception d'une demande de migration de quelques agents vers une autre coalition");
+					}
 				}
 			}
 			
@@ -728,6 +770,101 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	//dit aux autre agents d'arréter le recrutement
 	private void sendCoalitionFull() {
 		this.sendMessageStringCoalition(this.id_Coal + ": Coalition full", this.members, "stop SayGolem");
+	}
+	
+	private void dissolveAndChangeCoal(ACLMessage msg) {
+		// Le message contient un string de l'AID du leader de la coalition à rejoindre
+		AID otherCoalLeader = new AID(msg.getContent(), AID.ISLOCALNAME);
+		
+		// TODO: Est-ce qu'il est nécessaire de faire un sendCoalitionFull() d'abord ?
+		
+		// Si je suis le leader
+		if (((ExploreSoloAgent)this.myAgent).getLeaderCoalition()) {
+		
+			// 1) Je préviens tous les agents de la coalition qu'ils doivent en changer
+			Iterator<Entry<String, List<String>>> it = members.entrySet().iterator();
+		    while(it.hasNext()) {
+		    	Entry<String, List<String>> e = it.next();
+		    	
+		    	// on ne prévient pas le leader puisque c'est moi
+		    	if (!(e.getValue().get(0).equals("0"))) {
+			    	ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
+					msgSend.setSender(this.myAgent.getAID());
+					msgSend.setProtocol(msg.getContent() + ": dissolve and go to new coalition");
+					msgSend.setContent(otherCoalLeader.toString());
+					msgSend.addReceiver(new AID(e.getKey(), AID.ISLOCALNAME));
+					((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
+		    	}
+		    }
+			
+			// 2) Prévenir le leader que des agents arrivent ? est-ce vraiment utile
+			
+			// 3) Désactiver la coalition
+		    // TODO: est-ce qu'il faut attendre que tous les agents se soit transférés avant de transférer le leader ?
+		    // parce que si un relais de messages entre en jeu et que ça repose sur le mécaisme de coalition on ne 
+		    //peut pas la dissoudre direct car destruction du relais
+		}
+		
+		// Si je ne suis pas le leader
+		else {
+			// Je demande au leader du message d'entrer dans sa coalition
+			// TODO: est-ce qu'on peut se rebrancher directement sur ReceiveMessageSayGolem
+			// ou est-ce qu'on copie colle la partie concernée ici ?
+			
+			ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
+			msgSend.setSender(this.myAgent.getAID());
+			msgSend.setProtocol("Request entry coalition");
+			//msgSend.setContent();
+			msgSend.addReceiver(otherCoalLeader);
+			((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
+		}	
+	}
+	
+	private void changeCoal(ACLMessage msg) {
+		// Le message contient un string de l'AID du leader de la coalition à rejoindre
+		// ainsi que le nb d'agents à transférer
+		String[] tokens = msg.getContent().split("[ ]");
+		String otherCoalLeader = tokens[0];
+		int nbTransferedAgents = Integer.parseInt(tokens[1]);
+		if (log) {
+			System.out.println("Je dois transférer " + nbTransferedAgents + "agent(s) dans la coalition de" + otherCoalLeader);
+		}
+		
+		// Si je suis le leader
+		if (((ExploreSoloAgent)this.myAgent).getLeaderCoalition()) {
+
+			// Choix des agents à transférer par ordre de parcours de la hashmap des membres
+			int nb = 0; // nb d'agents transférés
+			Iterator<Entry<String, List<String>>> it = members.entrySet().iterator();
+			while(it.hasNext() && nb<nbTransferedAgents) {
+		    	Entry<String, List<String>> e = it.next();
+		    	
+		    	// on ne transfère pas le leader (en plus c'est moi) 
+		    	if (!(e.getValue().get(0).equals("0"))) {
+			    	ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
+					msgSend.setSender(this.myAgent.getAID());
+					msgSend.setProtocol(msg.getContent() + ": change coalition");
+					msgSend.setContent(otherCoalLeader);
+					msgSend.addReceiver(new AID(e.getKey(), AID.ISLOCALNAME));
+					((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
+					nb++;
+		    	}
+		    }
+		}
+		
+		// Si je ne suis pas le leader
+		else {
+			// Je demande au leader du message d'entrer dans sa coalition
+			// TODO: est-ce qu'on peut se rebrancher directement sur ReceiveMessageSayGolem
+			// ou est-ce qu'on copie colle la partie concernée ici ?
+			
+			ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
+			msgSend.setSender(this.myAgent.getAID());
+			msgSend.setProtocol("Request entry coalition");
+			//msgSend.setContent();
+			msgSend.addReceiver(new AID(otherCoalLeader, AID.ISLOCALNAME));
+			((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);	
+		}	
 	}
 	
 	public boolean done() {
