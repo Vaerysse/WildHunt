@@ -32,43 +32,43 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	//Liste des membre de la coalition avec leurs role, nom et position
 	//"Name agent" : ["Role","Position"]
 	private HashMap<String, List <String>> members = new HashMap <String, List <String>> ();//(dans update)
-	//nombre max d'agent possible dans la coalition
+	//nombre max d'agents possible dans la coalition
 	private int maxAgent;//(dans update)
 	//signale si la coalition est pleine
 	private boolean candidatAgentOpen;// (dans update)
 	//Donne la position la plus probable du golem
 	private String golemLocalisation;//(dans update)
-	//Sert de numérotation pour indiquer l'ordre des message pour les ordres de la coalition (demande de données et ordre de placement)
+	//Sert de numérotation pour indiquer l'ordre des messages pour les ordres de la coalition (demande de données et ordre de placement)
 	private int stepMSG;
-	//Sert dee numérotation au update envoyer
+	//Sert de numérotation au update envoyer
 	private int numUpdate;//(dans update)
-	//quel est mon pére? Utiliser pour fair le relais de message
+	//quel est mon pére? Utiliser pour faire le relais de message
 	private HashMap<String, String> fatherLastMSG = new HashMap <String, String> ();;
-	//quel sont mes fils (pas utiliser pour le moment)
+	//quels sont mes fils (pas utilisé pour le moment)
 	private List<String> sonLastMSG = new ArrayList<String>();
-	//temps d'attente max avant de sortir de la coalition si aucun nouveaux messages
+	//temps d'attente max avant de sortir de la coalition si aucun nouveau message
 	private long timerWaitMessageCoalition;
-	//variable a true tant que tous les agents de la coalition non pas envoyé leur données sur la vision du golem (utiliser par le leader)
+	//variable a true tant que tous les agents de la coalition n'ont pas envoyé leurs données sur la vision du golem (utilisé par le leader)
 	private boolean waitDataGolemAllAgent;
-	//déclanche la chasse au golem
+	//déclenche la chasse au golem
 	private boolean huntGolem;
-	//déclanche la fase de calcule pour attraper le golem
+	//déclenche la phase de calcul pour attraper le golem
 	private boolean huntGolemProcess;
 	//chasse en cours
 	private boolean huntGolemNow;
-	//stocke les valeur de position probable du golem envoyer par chaque agent (stack les valeurs de même position) (utiliser par le leader)
+	//stocke les valeurs de position probable du golem envoyées par chaque agent (stack les valeurs de même position) (utilisé par le leader)
 	private HashMap<String, Double> dataPositionGolem;
-	//list des agents dont on attend la réponse des données sur le golem (utiliser par le leader)
+	//liste des agents dont on attend la réponse des données sur le golem (utilisé par le leader)
 	private List<String> waitAgentDataReturn = new ArrayList <String> ();
-	//Position données a chaque agent pour attraper le golem (utiliser par le leader)
+	//Position donnée a chaque agent pour attraper le golem (utilisé par le leader)
 	private HashMap <String, String> positionAgent = new HashMap <String, String> ();
-	//hashmap de boolean pour signaler si l'agent est arrivé à la position demander pour attraper le golem (utiliser par le leader)
+	//hashmap de boolean pour signaler si l'agent est arrivé à la position demandée pour attraper le golem (utilisé par le leader)
 	private HashMap <String, Boolean> verificationPositionAgent = new HashMap <String, Boolean> ();
-	//agent arriver a bon port (à envoyé)
+	//agent arrivé a bon port (à envoyé)
 	private HashMap <String, String> agentinPosition = new HashMap <String, String> ();
-	//position ou l'agent doit aller (propre a chaque agent)
+	//position où l'agent doit aller (propre à chaque agent)
 	private String goPosition;
-	//Signifie si le golem est attraper ou non
+	//Signifie si le golem est attrapé ou non
 	private Boolean golemCatch;//(dans update)
 	//Si la coalition est active
 	private Boolean activeCoalition;
@@ -127,12 +127,12 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			System.out.println(this.myAgent.getLocalName() + " : Behaviour de coalition " + this.id_Coal + " actif");
 
 			//Template message neutre, utilisé actuellement pour:
-			//Les demande et reponse pour entré dans la coalition
+			//Les demandes et réponses pour entrer dans la coalition
 			final MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 					MessageTemplate.MatchProtocol(this.id_Coal));			
 			final ACLMessage msg = this.myAgent.receive(msgTemplate);
 
-			//Template de reception des demandes pour entré dans la coalition
+			//Template de reception des demandes pour entrer dans la coalition
 			final MessageTemplate msgTemplateEnterCoalition = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 					MessageTemplate.MatchProtocol("Request entry coalition"));			
 			final ACLMessage msgEnterCoalition = this.myAgent.receive(msgTemplateEnterCoalition);
@@ -144,32 +144,32 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			final ACLMessage msgGolemPosition = this.myAgent.receive(msgTemplateGolemPosition);		
 
 			//Template message concernant le golem utilisé actuellement pour:
-			//leader : demande au autre agent si il sente aussi les golem et où
-			//leader : envoie a chaque agent ou ils doivent se placer
+			//leader : demande aux autres agents si ils sentent aussi les golems et où
+			//leader : envoie à chaque agent où ils doivent se placer
 			//autre : répondre au leader
 			final MessageTemplate msgTemplateGolemHuntStrat = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 					MessageTemplate.MatchProtocol(this.id_Coal + ": golem hunt strat"));			
 			final ACLMessage msgGolemHuntStrat = this.myAgent.receive(msgTemplateGolemHuntStrat);
 
 			//Template message nombre d'agent dans la coalition, utilisé actuellement pour:
-			// demander et répondre à la question "Nb d'agent  dans la coalition?"
+			// demander et répondre à la question "Nb d'agents dans la coalition?"
 			final MessageTemplate msgTemplatenbAgent = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 					MessageTemplate.MatchProtocol(this.id_Coal + ": nb Agent"));			
 			final ACLMessage msgnbAgent = this.myAgent.receive(msgTemplatenbAgent);	
 
 			//Template message pour l'update des données du behaviour de la coalition, utilisé actuellement pour:
-			//leader: envoyé les données updaté du behaviour à l'ensemble de la coalition
+			//leader: envoyer les données updatées du behaviour à l'ensemble de la coalition
 			final MessageTemplate msgTemplateUpdate = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 					MessageTemplate.MatchProtocol(this.id_Coal + ": Update behaviour"));			
 			final ACLMessage msgUpdate = this.myAgent.receive(msgTemplateUpdate);	
 
 			//Template message pour stoper le recrutement dans la coalition, utilisé actuellement pour:
-			//leader: envoyé à l'ensemble de la coalition d'arréter le recrutement
+			//leader: envoyer à l'ensemble de la coalition d'arréter le recrutement
 			final MessageTemplate msgTemplateCoalitionFull = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 					MessageTemplate.MatchProtocol(this.id_Coal + ": Coalition full"));			
 			final ACLMessage msgCoalitionFull = this.myAgent.receive(msgTemplateCoalitionFull);
 
-			//Template message pour dire que je suis sur la position définie par la leader
+			//Template message pour dire que je suis sur la position définie par le leader
 			final MessageTemplate msgTemplateInPosition = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 					MessageTemplate.MatchProtocol(this.id_Coal + ": In position"));			
 			final ACLMessage msgInPosition = this.myAgent.receive(msgTemplateInPosition);
@@ -188,13 +188,13 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 
 			// partie réservé au leader
 			if (((ExploreSoloAgent)this.myAgent).getLeaderCoalition()){
-				//de nouveau agent peuvent encore venir dans la coalition
+				//de nouveaux agents peuvent encore venir dans la coalition
 				if(this.candidatAgentOpen) {
 					if(msgEnterCoalition != null && !msgEnterCoalition.getSender().getLocalName().equals(this.myAgent.getAID().getLocalName())) {									
 						if(log) {
 							System.out.println("Reception d'une demande d'entré dans la coalition");
 						}
-						//reception d'une demande d'entré dans la coalition
+						//reception d'une demande d'entrer dans la coalition
 						this.addAgentCoalition(msgEnterCoalition);
 					}			
 					//reception d'une demande de localisation de golem
@@ -244,9 +244,9 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 				}//si pas de nouveau possible dans la coalition on passe en chasse
 				else {
 					if(msgGolemHuntStrat != null) {
-						//si l'on attend des data d'agent concernant la position du golem
+						//si l'on attend des data d'agents concernant la position du golem
 						if(waitDataGolemAllAgent) {
-							//traitement des messages reçues
+							//traitement des messages reçus
 							HashMap<String, String> data;
 							try {
 								data = (HashMap<String, String>) msgGolemHuntStrat.getContentObject();
@@ -256,9 +256,9 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 								data = new HashMap <String, String> ();
 								data.put("data", "-1");
 							}
-							//si il y a des donnée valable pour la chasse au golem
+							//si il y a des données valables pour la chasse au golem
 							if(data.get("data").equals("2")){
-								//faire une boucle sur les key pour récupéré les double (sous forme de string) a intégré a chaque noeud
+								//faire une boucle sur les key pour récupérer les double (sous forme de string) à intégrer a chaque noeud
 								for(String nodeID : data.keySet()) {
 									//permet de prendre uniquement les id node
 									if(nodeID != "data" && nodeID != "agent") {
@@ -269,10 +269,10 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 									}
 								}
 							}
-							//retirer l'agent de la liste d'attente de retour de donnée
+							//retirer l'agent de la liste d'attente de retour de données
 							this.waitAgentDataReturn.remove(data.get("agent"));
 
-							//si la liste est vide alors plus de données en attente de reception
+							//si la liste est vide alors plus de données en attente de réception
 							if(this.waitAgentDataReturn.isEmpty()) {
 								this.waitDataGolemAllAgent = false;
 							}
@@ -282,7 +282,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 							}
 						}
 					}
-					//si plus de message en attente on calcule ou peut se trouver le golem
+					//si plus de message en attente on calcule où peut se trouver le golem
 					if(!waitDataGolemAllAgent && !this.huntGolem) {
 						if(log) {
 							System.out.println("il n'y a plus de donnée de localisation de golem à attendre");
@@ -291,16 +291,16 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 						this.huntGolem = true;
 					}
 					if(huntGolemProcess) {
-						//definir ou se trouve le golem et mettre a jour
+						//definir où se trouve le golem et mettre à jour
 						this.golemLocalisation = this.bestPositionGolem();
-						//envoie de l'update du behaviour
+						//envoi de l'update du behaviour
 						this.sendUpdateDataBehaviour();
-						//calcule de la postion a donnée a chaque agent
+						//calcul de la postion à donner à chaque agent
 						this.calculPositionCaptureGolem();
 						if(log) {
 							System.out.println("go position leader : " + this.goPosition);
 						}
-						//envoie de la position que doit avoir les agents pour capturer le golem
+						//envoi de la position que doit avoir les agents pour capturer le golem
 						this.sendPositionAgentHuntGolem();
 						this.huntGolemProcess = false;
 						this.huntGolemNow = true;
@@ -308,7 +308,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 							this.followPathNewPosition(this.goPosition);
 						}
 					}
-					//je recoit des message d'agent qu'ils disent qu'il sont en position
+					//je recois des message d'agents qui me disent qu'ils sont en position
 					if(msgInPosition != null && !this.golemCatch && !msgInPosition.getSender().getLocalName().equals(this.myAgent.getLocalName())) {
 						this.sendAgentVerifPosition(msgInPosition);				
 						}
@@ -323,13 +323,13 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 				}
 			}//non leader
 			else {
-				//je recoit une update des données du behaviour (penser a sup say golem si candidatAgentOpen=false)
+				//je recois une update des données du behaviour (penser a sup say golem si candidatAgentOpen=false)
 				if(msgUpdate != null) {
 					this.receivedUpdateDataBehaviour(msgUpdate);
 				}
-				//je reçoit un message du leader qui me donne un position pour choper le golem ou me demande ou il est et se n'est pas moi
+				//je reçois un message du leader qui me donne une position pour choper le golem ou me demande où il est et ce n'est pas moi
 				if(msgGolemHuntStrat != null && !msgGolemHuntStrat.getSender().getLocalName().equals(this.myAgent.getLocalName())) {					
-					//si le message recue est une réponse (data = 2) alors l'envoyé à celui qui ma poser la question
+					//si le message reçu est une réponse (data = 2) alors l'envoyer à celui qui m'a posé la question
 					HashMap <String, String> msgGolemStrat;
 					try {
 						msgGolemStrat =(HashMap<String, String>) msgGolemHuntStrat.getContentObject();
@@ -348,19 +348,19 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 					}
 					//vérifie qu'il n'y a pas d'erreur
 					if(!msgGolemStrat.get("data").equals("-1")) {
-						//Si data = 2 c'est une réponse envoyer par mon fols, je doit la redonner à mon pére
+						//Si data = 2 c'est une réponse envoyée par mon fils, je dois la redonner à mon pére
 						if(msgGolemStrat.get("data").equals("2")) {
 							HashMap <String, List <String>> father = new HashMap <String, List <String>> ();
 							father.put(fatherLastMSG.get(this.id_Coal + ": golem hunt strat 1"), new ArrayList<String> ());
 							this.sendMessageObjectCoalition(msgGolemHuntStrat.getProtocol(), father , msgGolemStrat);
 						}//sinon
 						else {
-							//j'ajoute le protocole et de sender au donnée
+							//j'ajoute le protocole et le sender aux données
 							msgGolemStrat.put("proto", msgGolemHuntStrat.getProtocol());
 							msgGolemStrat.put("father", msgGolemHuntStrat.getSender().getLocalName());
-							//demande ou il est
+							//demande où il est
 							this.receiveRequestGolemPosition(msgGolemStrat);
-							//me dit ou aller
+							//me dit où aller
 							this.receivePositionCatchGolem(msgGolemStrat);	
 						}
 					}
@@ -381,11 +381,11 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 				}
 			}
 			
-			//si je suis arriver sur la position que l'on m'a attribuer
+			//si je suis arrivé sur la position que l'on m'a attribuée
 			if(this.huntGolem && goPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
-				//envoyer a tous le monde que l'agent est sur position
+				//envoyer à tout le monde que l'agent est sur position
 				if(!this.agentinPosition.get(this.myAgent.getLocalName()).equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
-					this.agentinPosition.remove(this.myAgent.getLocalName());//j'enléve l'ancien position
+					this.agentinPosition.remove(this.myAgent.getLocalName());//j'enlève l'ancienne position
 					this.agentinPosition.put(this.myAgent.getLocalName(), ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());//je rajoute la nouvelle position
 				}
 				if(log) {
@@ -868,23 +868,12 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		
 		// Si je suis le leader
 		if (((ExploreSoloAgent)this.myAgent).getLeaderCoalition()) {
-		
-			// 1) Je préviens tous les agents de la coalition qu'ils doivent en changer
-			Iterator<Entry<String, List<String>>> it = members.entrySet().iterator();
-		    while(it.hasNext()) {
-		    	Entry<String, List<String>> e = it.next();
-		    	
-		    	// on ne prévient pas le leader puisque c'est moi
-		    	if (!(e.getValue().get(0).equals("0"))) {
-			    	ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
-					msgSend.setSender(this.myAgent.getAID());
-					msgSend.setProtocol(msg.getContent() + ": dissolve and go to new coalition");
-					msgSend.setContent(otherCoalLeader.toString());
-					msgSend.addReceiver(new AID(e.getKey(), AID.ISLOCALNAME));
-					((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
-		    	}
-		    }
 			
+			// 1) Je préviens tous les agents de la coalition qu'ils doivent en changer
+			HashMap <String, List <String>> agents = new HashMap <String, List <String>>(this.members);
+			agents.remove(this.myAgent.getAID().getLocalName()); // je me retire de la liste des agents à qui transmettre le message
+			this.sendMessageStringCoalition(msg.getContent() + ": dissolve and go to new coalition", agents, otherCoalLeader.toString());
+						
 			// 2) Prévenir le leader que des agents arrivent ? est-ce vraiment utile
 			
 			// 3) Désactiver la coalition
@@ -895,64 +884,80 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		
 		// Si je ne suis pas le leader
 		else {
-			// Je demande au leader du message d'entrer dans sa coalition
-			// TODO: est-ce qu'on peut se rebrancher directement sur ReceiveMessageSayGolem
-			// ou est-ce qu'on copie colle la partie concernée ici ?
-			
-			ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
-			msgSend.setSender(this.myAgent.getAID());
-			msgSend.setProtocol("Request entry coalition");
-			//msgSend.setContent();
-			msgSend.addReceiver(otherCoalLeader);
-			((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
+			// Je demande à l'autre leader (dont l'AID a été transmise par message) d'entrer dans sa coalition			
+			this.requestEntryCoalition(otherCoalLeader);
 		}	
 	}
 	
 	private void changeCoal(ACLMessage msg) {
 		// Le message contient un string de l'AID du leader de la coalition à rejoindre
 		// ainsi que le nb d'agents à transférer
-		String[] tokens = msg.getContent().split("[ ]");
-		String otherCoalLeader = tokens[0];
-		int nbTransferedAgents = Integer.parseInt(tokens[1]);
-		if (log) {
-			System.out.println("Je dois transférer " + nbTransferedAgents + "agent(s) dans la coalition de" + otherCoalLeader);
-		}
 		
 		// Si je suis le leader
 		if (((ExploreSoloAgent)this.myAgent).getLeaderCoalition()) {
-
+			
 			// Choix des agents à transférer par ordre de parcours de la hashmap des membres
+			String[] tokens = msg.getContent().split("[ ]");
+			String otherCoalLeader = tokens[0]; // string de l'AID du leader de la coalition à rejoindre
+			int nbTransferedAgents = Integer.parseInt(tokens[1]); // nb d'agents à transférer
+			if (log) {
+				System.out.println("Je dois transférer " + nbTransferedAgents + "agent(s) dans la coalition de" + otherCoalLeader);
+			}
+			List <String> content = new ArrayList <String>();
+			content.add(otherCoalLeader);// le premier élément de la liste correspond au leader de la coalition à rejoindre
+			HashMap <String, List <String>> agents = new HashMap <String, List <String>>(this.members);
+			agents.remove(this.myAgent.getAID().getLocalName()); // on ne veut pas transférer le leader ni lui envoyer de message (c'est moi !!)
 			int nb = 0; // nb d'agents transférés
-			Iterator<Entry<String, List<String>>> it = members.entrySet().iterator();
+			Iterator<Entry<String, List<String>>> it = agents.entrySet().iterator();
 			while(it.hasNext() && nb<nbTransferedAgents) {
 		    	Entry<String, List<String>> e = it.next();
-		    	
-		    	// on ne transfère pas le leader (en plus c'est moi) 
-		    	if (!(e.getValue().get(0).equals("0"))) {
-			    	ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
-					msgSend.setSender(this.myAgent.getAID());
-					msgSend.setProtocol(msg.getContent() + ": change coalition");
-					msgSend.setContent(otherCoalLeader);
-					msgSend.addReceiver(new AID(e.getKey(), AID.ISLOCALNAME));
-					((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
-					nb++;
-		    	}
-		    }
+		    	content.add(e.getKey());
+		    	nb++;
+			}
+			
+			// Envoie du message à tous les agents de la coalition (sauf le leader)
+			this.sendMessageObjectCoalition(msg.getContent() + ": change coalition", agents, content);
 		}
 		
 		// Si je ne suis pas le leader
 		else {
-			// Je demande au leader du message d'entrer dans sa coalition
-			// TODO: est-ce qu'on peut se rebrancher directement sur ReceiveMessageSayGolem
-			// ou est-ce qu'on copie colle la partie concernée ici ?
-			
-			ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
-			msgSend.setSender(this.myAgent.getAID());
-			msgSend.setProtocol("Request entry coalition");
-			//msgSend.setContent();
-			msgSend.addReceiver(new AID(otherCoalLeader, AID.ISLOCALNAME));
-			((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);	
+			// Je regarde si je fais partie des agents qui doivent changer de coalition
+			List<String> agentsToChangeCoal = new ArrayList<String>();
+			try {
+				agentsToChangeCoal = (List<String>) msg.getContentObject();
+			} catch (UnreadableException e) {
+				e.printStackTrace();
+			}
+			// Si oui, je demande au leader (dont l'AID a été transmise par message) d'entrer dans sa coalition
+			if (agentsToChangeCoal.contains(this.myAgent.getAID().getLocalName())) { 
+				this.requestEntryCoalition(new AID(agentsToChangeCoal.get(0), AID.ISLOCALNAME));
+			}
+			// Sinon, je fais juste suivre le message
+			else { 				
+				// TODO
+				
+			}
 		}	
+	}
+	
+	private void requestEntryCoalition(AID leader) {
+		// Demande au leader passé en paramètre d'entrer dans sa coalition
+		
+		ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
+		msgSend.setSender(this.myAgent.getAID());
+		msgSend.setProtocol("Request entry coalition");
+		
+		List <String> data = new ArrayList <String> ();
+		data.add(((AbstractDedaleAgent)this.myAgent).getCurrentPosition()); // j'ajoute ma position pour que la coalition sache où je suis
+		try {
+			msgSend.setContentObject((Serializable) data);// envoie sa position (list)
+		} catch (IOException e) {
+			System.out.println("problem send list for entry coalition");
+			e.printStackTrace();
+		}
+		
+		msgSend.addReceiver(leader);
+		((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);	
 	}
 	
 	public boolean done() {
