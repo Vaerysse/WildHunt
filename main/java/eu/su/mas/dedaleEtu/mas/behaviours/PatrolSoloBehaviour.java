@@ -99,7 +99,7 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 				Golem_Present = true;
 			}
 			if(!((ExploreSoloAgent)this.myAgent).isInPursuit()) {
-				if(Golem_Present ) {
+				if(Golem_Present && !((ExploreSoloAgent)this.myAgent).getWaitEnterCoalition()) {
 					if (!((ExploreSoloAgent)this.myAgent).isInPursuit()) { // si je ne suis pas déjà entrain de poursuivre un golem
 						//JE LANCE LA PROCEDURE DE COALITION + ATTRAPAGE DE GOLEM MOUHAHAHAHAHA
 						System.out.println("GOLEM - " + this.myAgent.getLocalName());
@@ -108,6 +108,7 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 						String id_Behaviour = ((ExploreSoloAgent)this.myAgent).idBehaviourCreation();//je crée un identifiant de coalition
 						this.myAgent.addBehaviour(new CoalitionBehaviour(((ExploreSoloAgent)this.myAgent), id_Behaviour));//je lance le behaviour de coalition
 						this.myAgent.addBehaviour(new SayGolem(((ExploreSoloAgent)this.myAgent), id_Behaviour));
+						((ExploreSoloAgent)this.myAgent).setMoving(false);
 					}
 					else {
 						System.out.println("Je poursuis déjà - " + this.myAgent.getLocalName());

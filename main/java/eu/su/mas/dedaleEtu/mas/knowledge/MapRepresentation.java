@@ -400,7 +400,7 @@ public class MapRepresentation implements Serializable {
 		for(int i = 0 ; i < node_arround.size(); ) {
 			//si le noeud contient un agent, est égal à myPosition
 			if (node_arround.get(i).equals(myPosition) || !this.g.getNode(node_arround.get(i)).getAttribute("agent_present").equals("-1")) {
-				System.out.println("ici");
+				//System.out.println("ici");
 				node_arround.remove(i);
 			}
 			else {

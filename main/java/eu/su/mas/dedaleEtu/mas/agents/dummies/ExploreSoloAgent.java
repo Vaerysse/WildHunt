@@ -41,6 +41,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	private String lastVisitedNode = "";
 	private boolean inCoalition = false;
 	private boolean inCoalitionFull = false;
+	private boolean waitEnterCoalition = false;
 	private boolean leaderCoalition = false; // TODO: est-ce qu'on a vraiment besoin de garder ça maintenant qu'on a le leader directement ac leaderAID
 	private String coalitionId;
 	private String leaderAID = ""; // identifiant du leader
@@ -222,6 +223,14 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		this.setInCoalition(true);
 		this.setIDCoalition(numcoal);
 		this.setInPursuit(true);
+		this.setWaitEnterCoalition(false);
 	}
 	
+	public void setWaitEnterCoalition(boolean value) {
+		this.waitEnterCoalition = value;
+	}
+	
+	public boolean getWaitEnterCoalition(){
+		return this.waitEnterCoalition;
+	}
 }

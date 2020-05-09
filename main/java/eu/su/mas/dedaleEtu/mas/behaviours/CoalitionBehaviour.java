@@ -54,14 +54,18 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	private boolean huntGolem;
 	//déclanche la fase de calcule pour attraper le golem
 	private boolean huntGolemProcess;
+	//chasse en cours
+	private boolean huntGolemNow;
 	//stocke les valeur de position probable du golem envoyer par chaque agent (stack les valeurs de même position) (utiliser par le leader)
 	private HashMap<String, Double> dataPositionGolem;
 	//list des agents dont on attend la réponse des données sur le golem (utiliser par le leader)
 	private List<String> waitAgentDataReturn = new ArrayList <String> ();
 	//Position données a chaque agent pour attraper le golem (utiliser par le leader)
-	private HashMap <String, String> positionAgent;
+	private HashMap <String, String> positionAgent = new HashMap <String, String> ();
 	//hashmap de boolean pour signaler si l'agent est arrivé à la position demander pour attraper le golem (utiliser par le leader)
 	private HashMap <String, Boolean> verificationPositionAgent = new HashMap <String, Boolean> ();
+	//agent arriver a bon port (à envoyé)
+	private HashMap <String, String> agentinPosition = new HashMap <String, String> ();
 	//position ou l'agent doit aller (propre a chaque agent)
 	private String goPosition;
 	//Signifie si le golem est attraper ou non
@@ -97,6 +101,10 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		this.golemCatch = false;
 		this.activeCoalition = true;
 		this.huntGolemProcess = false;
+		this.huntGolemNow = false;
+		this.agentinPosition.put("list", "1");
+		this.agentinPosition.put(this.myAgent.getLocalName(), "");
+		this.goPosition = "0";
 		
 		this.fatherLastMSG.put(this.id_Coal + ": golem hunt strat 1", "");
 		this.fatherLastMSG.put(this.id_Coal + ": golem hunt strat 3", "");
@@ -207,6 +215,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 					if (this.members.size() >= this.maxAgent) {
 						if(log) {
 							System.out.println("La coalition est pleine.");
+							System.out.println("Coalition " + this.id_Coal + " : " + this.members);
 						}
 						//on ferme le droit d'inscription
 						this.candidatAgentOpen = false;
@@ -274,7 +283,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 						}
 					}
 					//si plus de message en attente on calcule ou peut se trouver le golem
-					if(!waitDataGolemAllAgent) {
+					if(!waitDataGolemAllAgent && !this.huntGolem) {
 						if(log) {
 							System.out.println("il n'y a plus de donnée de localisation de golem à attendre");
 						}
@@ -294,17 +303,23 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 						//envoie de la position que doit avoir les agents pour capturer le golem
 						this.sendPositionAgentHuntGolem();
 						this.huntGolemProcess = false;
+						this.huntGolemNow = true;
 						if(!this.goPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())){
 							this.followPathNewPosition(this.goPosition);
 						}
 					}
 					//je recoit des message d'agent qu'ils disent qu'il sont en position
-					if(msgInPosition != null && !this.golemCatch) {
+					if(msgInPosition != null && !this.golemCatch && !msgInPosition.getSender().getLocalName().equals(this.myAgent.getLocalName())) {
 						this.sendAgentVerifPosition(msgInPosition);				
 						}
 				}
-				if(this.golemCatch) {
-					System.out.println("Golem en " + this.golemLocalisation + " attrapé!!");
+				if(huntGolemNow) {
+					if(this.golemCatch) {
+						System.out.println("Golem en " + this.golemLocalisation + " attrapé!!");
+					}
+					else {
+						this.sendPositionAgentHuntGolem();
+					}
 				}
 			}//non leader
 			else {
@@ -369,20 +384,47 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			//si je suis arriver sur la position que l'on m'a attribuer
 			if(this.huntGolem && goPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
 				//envoyer a tous le monde que l'agent est sur position
-				this.sendMessageStringCoalition(this.id_Coal + ": In position", this.members, ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+				if(!this.agentinPosition.get(this.myAgent.getLocalName()).equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
+					this.agentinPosition.remove(this.myAgent.getLocalName());//j'enléve l'ancien position
+					this.agentinPosition.put(this.myAgent.getLocalName(), ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());//je rajoute la nouvelle position
+				}
+				if(log) {
+					System.out.println("Envoie localisation ok : " + this.agentinPosition);
+				}
+				this.sendMessageObjectCoalition(this.id_Coal + ": In position", this.members, this.agentinPosition);
 				((ExploreSoloAgent) this.myAgent).setMoving(false);
 				if(log) {
 					System.out.println(this.myAgent.getAID().getLocalName() + " : Je suis arrivé sur ma position - " + ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
 				}
 			}
-
-
-			//Autre agent et leader	
-			//TODO
-			//je recoit un message de mon fils de coalition		
-			//je recoit un message une demande de rentré dans la coalition (a transmetre à mon leader/pére)
-			//je recoit de mon fils les données ou il sent le golem (transmetre au leader/pére)
-			// recoit une demande d'entré dans la coalition, l'envoie au leader
+			if(!this.golemCatch && msgInPosition != null && msgInPosition.getSender().getLocalName().equals(this.myAgent.getLocalName())) {
+				HashMap <String, String> position;
+				try {
+					position = (HashMap<String, String>) msgInPosition.getContentObject();
+				} catch (UnreadableException e) {
+					position = new HashMap <String, String> ();
+					position.put("list", "0");
+					System.out.println("Erreur reception message protocol : msgGolemHuntStrat");
+					e.printStackTrace();
+				}		
+				if(this.agentinPosition.get("list").equals("1")){
+					//si j'ai éjà enregistré l'agent
+					if(this.agentinPosition.containsKey(msgInPosition.getSender().getLocalName())) {
+						//si la position de l'agent a changé
+						if(!this.agentinPosition.get(msgInPosition.getSender().getLocalName()).equals(position.get(msgInPosition.getSender().getLocalName())) ) {
+							this.agentinPosition.remove(msgInPosition.getSender().getLocalName());
+							this.agentinPosition.put(msgInPosition.getSender().getLocalName(), position.get(msgInPosition.getSender().getLocalName()));
+						}
+					}//sinon je l'enregistre dans ma liste
+					else {
+						this.agentinPosition.put(msgInPosition.getSender().getLocalName(), position.get(msgInPosition.getSender().getLocalName()));
+					}
+					if(log) {
+						System.out.println("Envoie localisation ok (transfert) : " + this.agentinPosition);
+					}
+					this.sendMessageObjectCoalition(this.id_Coal + ": In position", this.members, this.agentinPosition);
+				}
+			}
 		}
 	}
 
@@ -712,28 +754,46 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			this.goPosition = allPosition.get(this.myAgent.getLocalName());
 			//demarrer la chasse
 			this.huntGolem = true;
-			//je lance le calcule du chemin pour la nouvelle position et mis rend
-			if(!this.goPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())){
-				this.followPathNewPosition(this.goPosition);
-			}
 			//mettre a jour le step
 			this.stepMSG = Integer.parseInt(allPosition.get("Step"));
+			if(!this.goPosition.equals("0")) {
+				//je lance le calcule du chemin pour la nouvelle position et mis rend
+				if(!this.goPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())){
+					this.followPathNewPosition(this.goPosition);
+				}
+			}
 			
 			if(log) {
-				System.out.println("Reception position pour attraper le golem : nouvelle posittion : " + this.goPosition);
+				System.out.println(this.myAgent.getLocalName() + " reception position pour attraper le golem : nouvelle posittion : " + this.goPosition);
 			}
 		}
 	}
 	
 	//verifie que tous les agent sont en place a chaque message recu par un agent
 	private void sendAgentVerifPosition(ACLMessage msg) {
-		String agent = msg.getSender().getLocalName();
-		//se n'est pas moi et si je n'avait pas encore valider le positionnement de l'agent
-		if(!this.myAgent.getAID().getLocalName().equals(agent) && !this.verificationPositionAgent.get(agent)) {
-			//je vérifie que c'est bien la bonne position
-			if(this.positionAgent.get(agent).equals(msg.getContent())) {
-				this.verificationPositionAgent.remove(agent);
-				this.verificationPositionAgent.put(agent, true);
+		HashMap <String, String> position;
+		
+		try {
+			position = (HashMap<String, String>) msg.getContentObject();
+		} catch (UnreadableException e) {
+			position = new HashMap <String, String> ();
+			position.put("list", "-1");
+			System.out.println("Send verification position problem");
+			e.printStackTrace();
+		}	
+		if(!position.get("list").equals("-1")) {
+			for(String agent : position.keySet()) {
+				if(!agent.equals("list")) {
+					if(log) {
+						System.out.println("Regarde la position d'un agent : " + position.get(agent));
+						System.out.println("Normalement c'est : " + this.positionAgent.get(agent));
+					}
+					//je vérifie que c'est bien la bonne position
+					if(this.positionAgent.get(agent).equals(position.get(agent))) {
+						this.verificationPositionAgent.remove(agent);
+						this.verificationPositionAgent.put(agent, true);
+					}
+				}
 			}
 		}
 		
@@ -742,6 +802,11 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			if(!this.verificationPositionAgent.get(verifAgent)) {
 				this.golemCatch = false;
 			}
+		}
+		
+		if(log) {
+			System.out.println("Reception bonne position agent : " + msg.getSender().getLocalName());
+			System.out.println("Vérification position agent : " + this.verificationPositionAgent);
 		}
 		
 		if(this.golemCatch) {
@@ -773,6 +838,10 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 				}
 				((AbstractDedaleAgent)this.myAgent).moveTo(path.get(i));
 			}
+		}
+		
+		if(log) {
+			System.out.println(this.myAgent.getLocalName() + " : je suis en  : " + ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
 		}
 	}
 	
