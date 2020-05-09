@@ -42,8 +42,8 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	private int stepMSG;
 	//Sert dee numérotation au update envoyer
 	private int numUpdate;//(dans update)
-	//quel est mon pére? (pas uttiliser pour le moment)
-	private String fatherLastMSG;
+	//quel est mon pére? Utiliser pour fair le relais de message
+	private HashMap<String, String> fatherLastMSG = new HashMap <String, String> ();;
 	//quel sont mes fils (pas utiliser pour le moment)
 	private List<String> sonLastMSG = new ArrayList<String>();
 	//temps d'attente max avant de sortir de la coalition si aucun nouveaux messages
@@ -97,6 +97,10 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		this.golemCatch = false;
 		this.activeCoalition = true;
 		this.huntGolemProcess = false;
+		
+		this.fatherLastMSG.put(this.id_Coal + ": golem hunt strat 1", "");
+		this.fatherLastMSG.put(this.id_Coal + ": golem hunt strat 3", "");
+		this.fatherLastMSG.put(this.id_Coal + ": In position", "");
 		
 		((ExploreSoloAgent) this.myAgent).setMoving(false);//je ne bouge que sur ordre de la coalition
 		
@@ -308,22 +312,53 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 				if(msgUpdate != null) {
 					this.receivedUpdateDataBehaviour(msgUpdate);
 				}
-				//je reçoit un message du leader qui me donne un position pour choper le golem ou me demande ou il est
-				if(msgGolemHuntStrat != null) {
-					//demande ou il est
-					this.receiveRequestGolemPosition(msgGolemHuntStrat);
-					//me dit ou aller
-					this.receivePositionCatchGolem(msgGolemHuntStrat);		
+				//je reçoit un message du leader qui me donne un position pour choper le golem ou me demande ou il est et se n'est pas moi
+				if(msgGolemHuntStrat != null && !msgGolemHuntStrat.getSender().getLocalName().equals(this.myAgent.getLocalName())) {					
+					//si le message recue est une réponse (data = 2) alors l'envoyé à celui qui ma poser la question
+					HashMap <String, String> msgGolemStrat;
+					try {
+						msgGolemStrat =(HashMap<String, String>) msgGolemHuntStrat.getContentObject();
+					} catch (UnreadableException e) {
+						msgGolemStrat = new HashMap <String, String> ();
+						msgGolemStrat.put("Step", "0");
+						msgGolemStrat.put("data", "-1");
+						System.out.println("Erreur reception message protocol : msgGolemHuntStrat");
+						e.printStackTrace();
+					}		
+					
+					if(log) {
+						System.out.println("Message msgGolemHuntStrat protocol :");
+						System.out.println("Step :" + msgGolemStrat.get("Step"));
+						System.out.println("Data :" + msgGolemStrat.get("data"));
+					}
+					//vérifie qu'il n'y a pas d'erreur
+					if(!msgGolemStrat.get("data").equals("-1")) {
+						//Si data = 2 c'est une réponse envoyer par mon fols, je doit la redonner à mon pére
+						if(msgGolemStrat.get("data").equals("2")) {
+							HashMap <String, List <String>> father = new HashMap <String, List <String>> ();
+							father.put(fatherLastMSG.get(this.id_Coal + ": golem hunt strat 1"), new ArrayList<String> ());
+							this.sendMessageObjectCoalition(msgGolemHuntStrat.getProtocol(), father , msgGolemStrat);
+						}//sinon
+						else {
+							//j'ajoute le protocole et de sender au donnée
+							msgGolemStrat.put("proto", msgGolemHuntStrat.getProtocol());
+							msgGolemStrat.put("father", msgGolemHuntStrat.getSender().getLocalName());
+							//demande ou il est
+							this.receiveRequestGolemPosition(msgGolemStrat);
+							//me dit ou aller
+							this.receivePositionCatchGolem(msgGolemStrat);	
+						}
+					}
 				}
 				//réception d'une demande de dissolution et changement de coalition
-				if (msgDissolveAndChangeCoal != null) {
+				if (msgDissolveAndChangeCoal != null && !msgDissolveAndChangeCoal.getSender().getLocalName().equals(this.myAgent.getLocalName())) {
 					this.dissolveAndChangeCoal(msgDissolveAndChangeCoal);
 					if (log) {
 						System.out.println("Reception d'une demande de dissolution de la coalition et de migration vers une autre");
 					}
 				}
 				//réception d'une demande de changement de coalition
-				if (msgChangeCoal != null) {
+				if (msgChangeCoal != null && !msgChangeCoal.getSender().getLocalName().equals(this.myAgent.getLocalName())) {
 					this.changeCoal(msgChangeCoal);
 					if (log) {
 						System.out.println("Reception d'une demande de migration de quelques agents vers une autre coalition");
@@ -630,24 +665,13 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		}
 	}
 	
-	private void receiveRequestGolemPosition(ACLMessage msg) {
-		HashMap <String, String> request;
-		try {
-			request =(HashMap<String, String>) msg.getContentObject();
-		} catch (UnreadableException e) {
-			request = new HashMap <String, String> ();
-			e.printStackTrace();
-		}		
-		
-		if(log) {
-			System.out.println("Demande de donnée pour la localisation du golem :");
-			System.out.println("Step :" + request.get("Step"));
-			System.out.println("Data :" + request.get("data"));
-		}
-		
+	private void receiveRequestGolemPosition(HashMap<String, String> request) {
+		//vérification si bien étape suivante (et non vieux message) et que c'est la demande de position de l'odeur du golem (data = 1)
 		if((Integer.parseInt(request.get("Step")) > this.stepMSG) && (Integer.parseInt(request.get("data")) == 1)) {
+			//je note de qui j'obtien le message
+			this.fatherLastMSG.put(this.id_Coal + ": golem hunt strat 1", "" + request.get("father"));
 			//brodcast le message
-			this.sendMessageObjectCoalition(msg.getProtocol(), this.members, request);
+			this.sendMessageObjectCoalition(request.get("father"), this.members, request);
 			//mettre a jour le step
 			this.stepMSG = Integer.parseInt(request.get("Step"));
 			//calcule de la position golem à envoyé
@@ -667,28 +691,23 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			if(log) {
 				System.out.println("Demande de donnée pour la localisation du golem : envoie : " + data_Position_Golem_send);
 			}
-			this.sendMessageObjectCoalition(msg.getProtocol(), this.members, data_Position_Golem);
+			HashMap <String, List <String>> father = new HashMap <String, List <String>> ();
+			father.put(request.get("father"), new ArrayList<String> ());
+			this.sendMessageObjectCoalition(request.get("proto"), father , data_Position_Golem);
 		}
 		
 	}
 	
-	private void receivePositionCatchGolem(ACLMessage msg) {
-		HashMap <String, String> allPosition;
-		try {
-			allPosition =(HashMap<String, String>) msg.getContentObject();
-		} catch (UnreadableException e) {
-			allPosition = new HashMap <String, String> ();
-			allPosition.put("Step", "0");
-			allPosition.put("data", "-1");
-			e.printStackTrace();
-		}
+	private void receivePositionCatchGolem(HashMap <String, String> allPosition) {
 		if(log) {
 			System.out.println(this.myAgent.getAID().getLocalName() + " : Reception position pour attraper le golem :" + allPosition);
 		}
 		//si nouvelle étape de positionnement
 		if((Integer.parseInt(allPosition.get("Step")) > this.stepMSG) && (Integer.parseInt(allPosition.get("data")) == 3)) {
+			//je note de qui j'obtien le message
+			this.fatherLastMSG.put(this.id_Coal + ": golem hunt strat 3", "" + allPosition.get("father"));
 			//envoie du message pour agent plus loin (ping)
-			this.sendMessageObjectCoalition(msg.getProtocol(), this.members, allPosition);
+			this.sendMessageObjectCoalition(allPosition.get("proto"), this.members, allPosition);
 			//je regarde ou me positionner
 			this.goPosition = allPosition.get(this.myAgent.getLocalName());
 			//demarrer la chasse
