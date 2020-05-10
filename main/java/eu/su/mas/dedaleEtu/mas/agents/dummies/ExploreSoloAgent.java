@@ -14,6 +14,10 @@ import eu.su.mas.dedaleEtu.mas.behaviours.SayGolem;
 import eu.su.mas.dedaleEtu.mas.behaviours.SayHello;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import jade.core.behaviours.Behaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 
 /**
  * <pre>
@@ -33,7 +37,6 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	private MapRepresentation myMap;
 	private boolean moving = true;
 	private boolean inPursuit = false; // true if the agent is in pursuit of a golem
-	private List<String> blackListMap = new ArrayList<String>();
 	private List<String> agentZoneList = new ArrayList<String>();
 	private List<String> agentPositionList = new ArrayList<String>();
 	private long startDate = System.currentTimeMillis();
@@ -57,8 +60,20 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	protected void setup() {
 
 		super.setup();
-		
-		this.blackListMap.add(this.getLocalName());
+
+		// Enregistrement de l'agent dans les pages jaunes
+		DFAgentDescription dfd = new DFAgentDescription();
+        dfd.setName(getAID()); 
+        ServiceDescription sd = new ServiceDescription();
+        sd.setType("agent");
+        sd.setName(getLocalName());
+        dfd.addServices(sd);
+        try {  
+            DFService.register(this, dfd);  
+        }
+        catch (FIPAException fe) {
+        	fe.printStackTrace(); 
+        }
 		
 		List<Behaviour> lb=new ArrayList<Behaviour>();
 		
@@ -100,19 +115,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	public void setInPursuit(boolean value) {
 		this.inPursuit = value;
 	}
-	
-	public void addAgentBlackList(String agent) {
-		this.blackListMap.add(agent);
-	}
-	
-	public void supAgentBlackList(String agent) {
-		this.blackListMap.remove(agent);
-	}
-	
-	public List<String> getAgentBlackList(){
-		return this.blackListMap;
-	}
-	
+		
 	public void addAgentZoneList(String agent) {
 		this.agentZoneList.add(agent);
 	}
