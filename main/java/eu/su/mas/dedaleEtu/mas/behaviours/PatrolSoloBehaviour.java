@@ -26,11 +26,13 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 	private boolean finished = false;
 	private String bestPath;
 	private int step;
+	private String posSmelGolem;
 	
 	public PatrolSoloBehaviour(final ExploreSoloAgent myAgent, MapRepresentation myMap) {
 		super(myAgent);
 		this.myMap = myMap;
 		this.step = 0;
+		this.posSmelGolem = "";
 	}
 
 	@Override
@@ -85,7 +87,7 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 					// je mets a jour le noeud pour dire que je le sens
 					//System.out.println("J'attends les ordres !!!");
 					//System.out.println("je sens");				
-					//TODO se depalcer sur la case ou je le sent(pour sentir ou il se déplace si il se déplace)
+					
 					this.myMap.setGolemDetection(ID_node, true, myPosition);
 				}
 				else {
@@ -93,9 +95,60 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 					this.myMap.setGolemDetection(ID_node, false, myPosition);
 				}
 			}
+				
+			//puis je marque autour de tous les node qui ne sent pas qu'il ne peux pas y avoir de golem (réduit les posibilité de placement du golem)
+			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter2 = lobs.iterator();
+			while(iter2.hasNext()){
+				Couple<String, List<Couple<Observation, Integer>>> temp2 = iter2.next();
+				List<Couple<Observation, Integer>> couple2 = temp2.getRight();
+				String ID_node2 = temp2.getLeft();
+				//System.out.println("id, couple");
+				//System.out.println(ID_node);
+				//System.out.println(couple);
+				//si je sens le golem
+				if(couple2.size() > 0) {
+					//il ne se passe rien
+				}
+				else {
+					//System.out.println("je ne le sens pas");
+					//je demande les voisins du node
+					List <String> listNode = this.myMap.neighborNode(ID_node2);
+					for(int i = 0; i < listNode.size(); i++) {
+						this.myMap.setGolemDetection(listNode.get(i), false, myPosition);
+					}
+				}
+			}
+
+			
 			this.myMap.setNodeSmell(node_sent);
 			//3) si j'ai senti un golem ou que je suis danss une coalition
 			if(((ExploreSoloAgent)this.myAgent).isInPursuit()) {
+				System.out.println(this.myAgent.getLocalName() + " : Je suis en train de poursuivre le golem : " + lobs);
+				List <String> neighborNode = ((ExploreSoloAgent)this.myAgent).getMap().neighborNode(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());//determine les neouds voisins
+				neighborNode.add(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+				boolean move = true;
+				int i = 0;
+				String nodeMove = "";
+				//System.out.println("neighborNode : " + neighborNode + " -- et node_sent : " + node_sent);
+				while(move && i < neighborNode.size()) {
+					int j = 0;
+					while(move && j < node_sent.size()) {
+						//System.out.println("neighborNode : " + neighborNode.get(i) + " -- et node_sent : " + node_sent.get(j));
+						if(neighborNode.get(i).equals(node_sent.get(j))) {
+							//System.out.println("ok je note le node ou aller : " + node_sent.get(j));
+							move = false;
+							nodeMove = node_sent.get(j);
+						}
+						j++;
+					}
+					i++;
+				}
+				System.out.println(this.myAgent.getLocalName() + " : je suis sur le node " + ((AbstractDedaleAgent)this.myAgent).getCurrentPosition() + " et je move sur le " + nodeMove);
+				//si le node trouvé n'est pas null et que le golem a bougé
+				if(!nodeMove.equals("") && !nodeMove.equals(this.posSmelGolem)) {
+					((AbstractDedaleAgent)this.myAgent).moveTo(nodeMove);//l'agent bouge prés du golem	
+					this.posSmelGolem = nodeMove;
+				}
 				Golem_Present = true;
 			}
 			if(!((ExploreSoloAgent)this.myAgent).isInPursuit()) {
@@ -108,7 +161,31 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 						String id_Behaviour = ((ExploreSoloAgent)this.myAgent).idBehaviourCreation();//je crée un identifiant de coalition
 						this.myAgent.addBehaviour(new CoalitionBehaviour(((ExploreSoloAgent)this.myAgent), id_Behaviour));//je lance le behaviour de coalition
 						this.myAgent.addBehaviour(new SayGolem(((ExploreSoloAgent)this.myAgent), id_Behaviour));
-						((ExploreSoloAgent)this.myAgent).setMoving(false);
+						((ExploreSoloAgent)this.myAgent).setMoving(false);	
+						
+						List <String> neighborNode = ((ExploreSoloAgent)this.myAgent).getMap().neighborNode(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());//determine les neouds voisins
+						neighborNode.add(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+						boolean move = true;
+						int i = 0;
+						String nodeMove = "";
+						//System.out.println("neighborNode : " + neighborNode + " -- et node_sent : " + node_sent);
+						while(move && i < neighborNode.size()) {
+							int j = 0;
+							while(move && j < node_sent.size()) {
+								//System.out.println("neighborNode : " + neighborNode.get(i) + " -- et node_sent : " + node_sent.get(j));
+								if(neighborNode.get(i).equals(node_sent.get(j))) {
+									//System.out.println("ok je note le node ou aller : " + node_sent.get(j));
+									move = false;
+									nodeMove = node_sent.get(j);
+								}
+								j++;
+							}
+							i++;
+						}
+						System.out.println(this.myAgent.getLocalName() + " : je suis sur le node " + ((AbstractDedaleAgent)this.myAgent).getCurrentPosition() + " et je move sur le " + nodeMove);
+						((AbstractDedaleAgent)this.myAgent).moveTo(nodeMove);//l'agent bouge prés du golem	
+						this.posSmelGolem = nodeMove;
+						this.finished = true;
 					}
 					else {
 						System.out.println("Je poursuis déjà - " + this.myAgent.getLocalName());

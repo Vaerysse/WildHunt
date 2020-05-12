@@ -9,6 +9,8 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import dataStructures.serializableGraph.SerializableSimpleGraph;
+import dataStructures.tuple.Couple;
+import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
@@ -38,6 +40,10 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	private boolean candidatAgentOpen;// (dans update)
 	//Donne la position la plus probable du golem
 	private String golemLocalisation;//(dans update)
+	//Donne la nouvelle position la plus probable du golem
+	private String oldGolemLocalisation;//(dans update)
+	//donne la liste des noeud du golem (sert pour la vérification qu'il soit attraper)
+	private List <String> neighborNodeGolem;
 	//Sert de numérotation pour indiquer l'ordre des messages pour les ordres de la coalition (demande de données et ordre de placement)
 	private int stepMSG;
 	//Sert de numérotation au update envoyer
@@ -72,6 +78,10 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	private Boolean golemCatch;//(dans update)
 	//Si la coalition est active
 	private Boolean activeCoalition;
+	//le golem a bouger
+	private boolean golemMove;
+	//position du leader
+	private String posLeader;
 	
 	private long timer;
 	
@@ -96,7 +106,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		
 		this.numUpdate = 0;
 		this.timerWaitMessageCoalition = 10000;
-		this.waitDataGolemAllAgent = true;
+		this.waitDataGolemAllAgent = false;
 		this.huntGolem = false;
 		this.golemCatch = false;
 		this.activeCoalition = true;
@@ -109,8 +119,16 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		this.fatherLastMSG.put(this.id_Coal + ": golem hunt strat 1", "");
 		this.fatherLastMSG.put(this.id_Coal + ": golem hunt strat 3", "");
 		this.fatherLastMSG.put(this.id_Coal + ": In position", "");
+		this.golemMove = false;
+		this.posLeader = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 		
 		((ExploreSoloAgent) this.myAgent).setMoving(false);//je ne bouge que sur ordre de la coalition
+		//definir où se trouve le golem et mettre à jour si leader
+		if(((ExploreSoloAgent)this.myAgent).getLeaderCoalition()) {
+			this.golemLocalisation = this.bestPositionGolem();
+			this.oldGolemLocalisation = this.golemLocalisation;
+			this.neighborNodeGolem = new ArrayList <String>();
+		}
 		
 		// Nombre agent max dans coalition
 		this.maxAgent = ((ExploreSoloAgent)this.myAgent).getMap().getMaxDegree(); // degré max du graphe
@@ -124,7 +142,8 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	public void action() {
 		//si la coalition est active
 		if(this.activeCoalition) {
-			System.out.println(this.myAgent.getLocalName() + " : Behaviour de coalition " + this.id_Coal + " actif");
+
+			//System.out.println(this.myAgent.getLocalName() + " : Behaviour de coalition " + this.id_Coal + " actif");
 
 			//Template message neutre, utilisé actuellement pour:
 			//Les demandes et réponses pour entrer dans la coalition
@@ -183,11 +202,16 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			final MessageTemplate msgTemplateChangeCoal = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
 					MessageTemplate.MatchProtocol(this.id_Coal + ": change coalition"));			
 			final ACLMessage msgChangeCoal = this.myAgent.receive(msgTemplateChangeCoal);
-			
-			
 
+
+			
 			// partie réservé au leader
 			if (((ExploreSoloAgent)this.myAgent).getLeaderCoalition()){
+				
+				//je regarde autour de moi si le golem à bougé si je ne suis pas en attente de message
+				if(!waitDataGolemAllAgent) {
+					this.updateViewAgent();
+				}
 				//de nouveaux agents peuvent encore venir dans la coalition
 				if(this.candidatAgentOpen) {
 					if(msgEnterCoalition != null && !msgEnterCoalition.getSender().getLocalName().equals(this.myAgent.getAID().getLocalName())) {									
@@ -210,7 +234,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 							System.out.println("Reception d'une demande du nombre d'agent dans la coalition");
 						}
 						this.nbAgentCoalition(msg);
-					}			
+					}
 					//si la coalition est pleine
 					if (this.members.size() >= this.maxAgent) {
 						if(log) {
@@ -224,102 +248,95 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 						this.sendCoalitionFull();
 						//Demande à tous les agents de la coalition si ils voient un golem actuellement et récup data
 						this.giveDataGolem();
-						this.waitDataGolemAllAgent = true;
+					}			
+				}
+				
+				//réception d'une demande de dissolution et changement de coalition
+				if (msgDissolveAndChangeCoal != null) {
+					this.dissolveAndChangeCoal(msgDissolveAndChangeCoal);
+					if (log) {
+						System.out.println("Reception d'une demande de dissolution de la coalition et de migration vers une autre");
 					}
-					//réception d'une demande de dissolution et changement de coalition
-					if (msgDissolveAndChangeCoal != null) {
-						this.dissolveAndChangeCoal(msgDissolveAndChangeCoal);
-						if (log) {
-							System.out.println("Reception d'une demande de dissolution de la coalition et de migration vers une autre");
-						}
+				}
+				//réception d'une demande de changement de coalition
+				if (msgChangeCoal != null) {
+					this.changeCoal(msgChangeCoal);
+					if (log) {
+						System.out.println("Reception d'une demande de migration de quelques agents vers une autre coalition");
 					}
-					//réception d'une demande de changement de coalition
-					if (msgChangeCoal != null) {
-						this.changeCoal(msgChangeCoal);
-						if (log) {
-							System.out.println("Reception d'une demande de migration de quelques agents vers une autre coalition");
-						}
-					}
-					
-				}//si pas de nouveau possible dans la coalition on passe en chasse
-				else {
+				}
+				
+				
+				//si j'attend des données
+				if(this.waitDataGolemAllAgent) {					
 					if(msgGolemHuntStrat != null) {
-						//si l'on attend des data d'agents concernant la position du golem
-						if(waitDataGolemAllAgent) {
-							//traitement des messages reçus
-							HashMap<String, String> data;
-							try {
-								data = (HashMap<String, String>) msgGolemHuntStrat.getContentObject();
-							} catch (UnreadableException e) {
-								System.out.println("Problem msgGolemHuntStrat.getContentObject(), no format HashMap <String, String>");
-								e.printStackTrace();
-								data = new HashMap <String, String> ();
-								data.put("data", "-1");
-							}
-							//si il y a des données valables pour la chasse au golem
-							if(data.get("data").equals("2")){
-								//faire une boucle sur les key pour récupérer les double (sous forme de string) à intégrer a chaque noeud
-								for(String nodeID : data.keySet()) {
-									//permet de prendre uniquement les id node
-									if(nodeID != "data" && nodeID != "agent") {
-										if(log) {
-											System.out.println("Le leader regarde les données de localisation de golem envoyer par un agent : " + nodeID + " , " + data.get(nodeID));
-										}
-										this.addValueDataPositionGolem(nodeID, Double.parseDouble(data.get(nodeID)));
+						//traitement des messages reçus
+						HashMap<String, String> data;
+						try {
+							data = (HashMap<String, String>) msgGolemHuntStrat.getContentObject();
+						} catch (UnreadableException e) {
+							System.out.println("Problem msgGolemHuntStrat.getContentObject(), no format HashMap <String, String>");
+							e.printStackTrace();
+							data = new HashMap <String, String> ();
+							data.put("data", "-1");
+						}
+						if(log) {
+							System.out.println(this.myAgent.getLocalName() + " : msgGolemHuntStrat recue : " + data);
+						}
+						//si il y a des données valables pour la chasse au golem
+						if(data.get("data").equals("2") && Integer.parseInt(data.get("Step")) == this.stepMSG-1){
+							//faire une boucle sur les key pour récupérer les double (sous forme de string) à intégrer a chaque noeud
+							for(String nodeID : data.keySet()) {
+								//permet de prendre uniquement les id node
+								if(!nodeID.equals("data") && !nodeID.equals("agent")) {
+									if(log) {
+										System.out.println("Le leader regarde les données de localisation de golem envoyer par un agent : " + nodeID + " , " + data.get(nodeID));
 									}
+									this.addValueDataPositionGolem(nodeID, Double.parseDouble(data.get(nodeID)));
 								}
 							}
-							//retirer l'agent de la liste d'attente de retour de données
-							this.waitAgentDataReturn.remove(data.get("agent"));
-
-							//si la liste est vide alors plus de données en attente de réception
-							if(this.waitAgentDataReturn.isEmpty()) {
-								this.waitDataGolemAllAgent = false;
-							}
-							else {
-								//Demande à tous les agents de la coalition si ils voient un golem actuellement et récup data
-								this.giveDataGolem();
-							}
 						}
+						//retirer l'agent de la liste d'attente de retour de données
+						this.waitAgentDataReturn.remove(data.get("agent"));	
+					}				
+				}
+				
+				//si la liste est vide alors plus de données en attente de réception
+				if(this.waitAgentDataReturn.isEmpty()) {
+					this.waitDataGolemAllAgent = false;//on arréte l'attente de donnée
+					this.huntGolemProcess = true;//on lance le calcule
+				}
+				
+				if(this.huntGolemProcess) {
+					//definir où se trouve le golem et mettre à jour
+					this.golemLocalisation = this.bestPositionGolem();
+					if(log) {
+						System.out.println(this.myAgent.getLocalName() + " : golem localisé en : " + this.golemLocalisation);
 					}
-					//si plus de message en attente on calcule où peut se trouver le golem
-					if(!waitDataGolemAllAgent && !this.huntGolem) {
-						if(log) {
-							System.out.println("il n'y a plus de donnée de localisation de golem à attendre");
-						}
-						this.huntGolemProcess = true;
-						this.huntGolem = true;
-					}
-					if(huntGolemProcess) {
-						//definir où se trouve le golem et mettre à jour
-						this.golemLocalisation = this.bestPositionGolem();
-						//envoi de l'update du behaviour
-						this.sendUpdateDataBehaviour();
-						//calcul de la postion à donner à chaque agent
-						this.calculPositionCaptureGolem();
-						if(log) {
-							System.out.println("go position leader : " + this.goPosition);
-						}
-						//envoi de la position que doit avoir les agents pour capturer le golem
-						this.sendPositionAgentHuntGolem();
-						this.huntGolemProcess = false;
-						this.huntGolemNow = true;
-						if(!this.goPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())){
-							this.followPathNewPosition(this.goPosition);
-						}
-					}
+					//envoi de l'update du behaviour
+					this.sendUpdateDataBehaviour();
+					//calcul de la postion à donner à chaque agent
+					this.calculPositionCaptureGolem();
+					//envoie des données au agent concernèe
+					this.sendPositionAgentHuntGolem();	
+					//mis en position du leader
+					this.followPathNewPosition(this.goPosition);
+					//fin du processe pour chasse au golem
+					this.huntGolemProcess = false;
+					//début de l'attente de la bonne position des agents
+					this.huntGolem = true;
+				}
+				
+				//if(this.huntGolem) {
 					//je recois des message d'agents qui me disent qu'ils sont en position
 					if(msgInPosition != null && !this.golemCatch && !msgInPosition.getSender().getLocalName().equals(this.myAgent.getLocalName())) {
 						this.sendAgentVerifPosition(msgInPosition);				
 						}
-				}
-				if(huntGolemNow) {
-					if(this.golemCatch) {
-						System.out.println("Golem en " + this.golemLocalisation + " attrapé!!");
-					}
-					else {
-						this.sendPositionAgentHuntGolem();
-					}
+				//}	
+				//le golem est attrapé
+				if(this.golemCatch) {
+					this.huntGolem = false;
+					System.out.println("Le golem est attrapé!!!");
 				}
 			}//non leader
 			else {
@@ -358,13 +375,18 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 							//j'ajoute le protocole et le sender aux données
 							msgGolemStrat.put("proto", msgGolemHuntStrat.getProtocol());
 							msgGolemStrat.put("father", msgGolemHuntStrat.getSender().getLocalName());
-							//demande où il est
-							this.receiveRequestGolemPosition(msgGolemStrat);
-							//me dit où aller
-							this.receivePositionCatchGolem(msgGolemStrat);	
+							if(msgGolemStrat.get("data").equals("1")) {
+								//demande où il est
+								this.receiveRequestGolemPosition(msgGolemStrat);
+							}
+							if(msgGolemStrat.get("data").equals("3")) {
+								//me dit où aller
+								this.receivePositionCatchGolem(msgGolemStrat);	
+							}
 						}
 					}
 				}
+				
 				//réception d'une demande de dissolution et changement de coalition
 				if (msgDissolveAndChangeCoal != null && !msgDissolveAndChangeCoal.getSender().getLocalName().equals(this.myAgent.getLocalName())) {
 					this.dissolveAndChangeCoal(msgDissolveAndChangeCoal);
@@ -379,50 +401,50 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 						System.out.println("Reception d'une demande de migration de quelques agents vers une autre coalition");
 					}
 				}
-			}
 			
-			//si je suis arrivé sur la position que l'on m'a attribuée
-			if(this.huntGolem && goPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
-				//envoyer à tout le monde que l'agent est sur position
-				if(!this.agentinPosition.get(this.myAgent.getLocalName()).equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
-					this.agentinPosition.remove(this.myAgent.getLocalName());//j'enlève l'ancienne position
-					this.agentinPosition.put(this.myAgent.getLocalName(), ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());//je rajoute la nouvelle position
-				}
-				if(log) {
-					System.out.println("Envoie localisation ok : " + this.agentinPosition);
-				}
-				this.sendMessageObjectCoalition(this.id_Coal + ": In position", this.members, this.agentinPosition);
-				((ExploreSoloAgent) this.myAgent).setMoving(false);
-				if(log) {
-					System.out.println(this.myAgent.getAID().getLocalName() + " : Je suis arrivé sur ma position - " + ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
-				}
-			}
-			if(!this.golemCatch && msgInPosition != null && msgInPosition.getSender().getLocalName().equals(this.myAgent.getLocalName())) {
-				HashMap <String, String> position;
-				try {
-					position = (HashMap<String, String>) msgInPosition.getContentObject();
-				} catch (UnreadableException e) {
-					position = new HashMap <String, String> ();
-					position.put("list", "0");
-					System.out.println("Erreur reception message protocol : msgGolemHuntStrat");
-					e.printStackTrace();
-				}		
-				if(this.agentinPosition.get("list").equals("1")){
-					//si j'ai éjà enregistré l'agent
-					if(this.agentinPosition.containsKey(msgInPosition.getSender().getLocalName())) {
-						//si la position de l'agent a changé
-						if(!this.agentinPosition.get(msgInPosition.getSender().getLocalName()).equals(position.get(msgInPosition.getSender().getLocalName())) ) {
-							this.agentinPosition.remove(msgInPosition.getSender().getLocalName());
-							this.agentinPosition.put(msgInPosition.getSender().getLocalName(), position.get(msgInPosition.getSender().getLocalName()));
-						}
-					}//sinon je l'enregistre dans ma liste
-					else {
-						this.agentinPosition.put(msgInPosition.getSender().getLocalName(), position.get(msgInPosition.getSender().getLocalName()));
+				//si je suis arrivé sur la position que l'on m'a attribuée
+				if(goPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
+					//envoyer à tout le monde que l'agent est sur position
+					if(!this.agentinPosition.get(this.myAgent.getLocalName()).equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
+						this.agentinPosition.remove(this.myAgent.getLocalName());//j'enlève l'ancienne position
+						this.agentinPosition.put(this.myAgent.getLocalName(), ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());//je rajoute la nouvelle position
 					}
 					if(log) {
-						System.out.println("Envoie localisation ok (transfert) : " + this.agentinPosition);
+						System.out.println("Envoie localisation ok : " + this.agentinPosition);
 					}
 					this.sendMessageObjectCoalition(this.id_Coal + ": In position", this.members, this.agentinPosition);
+					((ExploreSoloAgent) this.myAgent).setMoving(false);
+					if(log) {
+						System.out.println(this.myAgent.getAID().getLocalName() + " : Je suis arrivé sur ma position - " + ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+					}
+				}
+				if(!this.golemCatch && msgInPosition != null && msgInPosition.getSender().getLocalName().equals(this.myAgent.getLocalName())) {
+					HashMap <String, String> position;
+					try {
+						position = (HashMap<String, String>) msgInPosition.getContentObject();
+					} catch (UnreadableException e) {
+						position = new HashMap <String, String> ();
+						position.put("list", "0");
+						System.out.println("Erreur reception message protocol : msgGolemHuntStrat");
+						e.printStackTrace();
+					}		
+					if(this.agentinPosition.get("list").equals("1")){
+						//si j'ai éjà enregistré l'agent
+						if(this.agentinPosition.containsKey(msgInPosition.getSender().getLocalName())) {
+							//si la position de l'agent a changé
+							if(!this.agentinPosition.get(msgInPosition.getSender().getLocalName()).equals(position.get(msgInPosition.getSender().getLocalName())) ) {
+								this.agentinPosition.remove(msgInPosition.getSender().getLocalName());
+								this.agentinPosition.put(msgInPosition.getSender().getLocalName(), position.get(msgInPosition.getSender().getLocalName()));
+							}
+						}//sinon je l'enregistre dans ma liste
+						else {
+							this.agentinPosition.put(msgInPosition.getSender().getLocalName(), position.get(msgInPosition.getSender().getLocalName()));
+						}
+						if(log) {
+							System.out.println("Envoie localisation ok (transfert) : " + this.agentinPosition);
+						}
+						this.sendMessageObjectCoalition(this.id_Coal + ": In position", this.members, this.agentinPosition);
+					}
 				}
 			}
 		}
@@ -514,7 +536,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	//permet de définir ou mettre les agents pour capturer le golem
 	private void calculPositionCaptureGolem() {
 		// definir les voisins du noeud ou on pense ou se trouve le golem
-		List <String> neighborNodeGolem = ((ExploreSoloAgent)this.myAgent).getMap().neighborNode(golemLocalisation);
+		this.neighborNodeGolem = ((ExploreSoloAgent)this.myAgent).getMap().neighborNode(golemLocalisation);
 		//repartir les noeuds entre les agents de la liste en définissant le chemin le plus court pour chacun
 		//copy de la list des agent pour éviter de donnée 2 noeud à un même agent
 		List <String> copyMembers = new ArrayList <String> ();
@@ -523,27 +545,30 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		}	
 		this.positionAgent = new HashMap <String, String> ();
 		//pour chaque noeud
-		for(int i = 0; i < neighborNodeGolem.size(); i++ ) {
+		for(int i = 0; i < copyMembers.size(); i++ ) {
 			//regarder quel agent est le plus proche
-			String bestAgent = "";
+			String bestNode = "";
 			int distancePath = 100000;
 				//tester si liste vide
-			if(!copyMembers.isEmpty()) {
+			if(!neighborNodeGolem.isEmpty()) {
 				List <String> path;
-				for(int j= 0; j < copyMembers.size(); j++) {
-					path = ((ExploreSoloAgent)this.myAgent).getMap().getShortestPath(this.members.get(copyMembers.get(j)).get(1),neighborNodeGolem.get(i));//definit le meilleur chemin entre la  position de l'agent et le noeud à aller
+				for(int j= 0; j < neighborNodeGolem.size(); j++) {
+					path = ((ExploreSoloAgent)this.myAgent).getMap().getShortestPath(this.members.get(copyMembers.get(i)).get(1),neighborNodeGolem.get(j));//definit le meilleur chemin entre la  position de l'agent et le noeud à aller
 					if(path.size() < distancePath) {
 						distancePath = path.size();
-						bestAgent = copyMembers.get(j);
+						bestNode = neighborNodeGolem.get(j);
 					}
 				}
-				copyMembers.remove(bestAgent);
-				if(bestAgent.equals(this.myAgent.getLocalName())) {
-					this.goPosition = neighborNodeGolem.get(i);
+				neighborNodeGolem.remove(bestNode);
+				if(copyMembers.get(i).equals(this.myAgent.getLocalName())) {
+					this.goPosition = bestNode;
+					if(log) {
+						System.out.println("Position leader mise a jour : " + this.goPosition);
+					}
 				}
 				else {
-					this.positionAgent.put(bestAgent, neighborNodeGolem.get(i));
-					this.verificationPositionAgent.put(bestAgent, false);
+					this.positionAgent.put(copyMembers.get(i), bestNode);
+					this.verificationPositionAgent.put(copyMembers.get(i), false);
 				}
 			}		
 		}	
@@ -554,6 +579,13 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		//on ajout le numéro de message
 		this.positionAgent.put("Step", "" + this.stepMSG);
 		this.positionAgent.put("data","3");
+		//création de liste des agents concerné
+		HashMap<String, List <String>> listAgent = new HashMap <String, List <String>> ();
+		for(String agent : this.positionAgent.keySet()) {
+			if(!agent.equals("data") && !agent.equals("Step")) {
+				listAgent.put(agent, new ArrayList <String>());
+			}
+		}
 		//on envoie le message
 		this.sendMessageObjectCoalition(this.id_Coal + ": golem hunt strat", this.members, this.positionAgent);
 		//on incremente l'étape de chasse
@@ -601,7 +633,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			for(String nodeID : data_golem.keySet()) {
 				data.put(nodeID,data_golem.get(nodeID).toString());
 			}
-			data.put("data", "1");
+			data.put("data", "2");
 		}
 		else {
 			data.put("data", "-1");
@@ -624,6 +656,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);
 	}
 	
+
 	//envoie la mise a jours des données du behaviour
 	private void sendUpdateDataBehaviour() {
 		HashMap<String, List <String>> update = new HashMap<String, List <String>>();
@@ -641,7 +674,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		List<String> updatecandidatAgentOpen = new ArrayList<String>();
 		updatecandidatAgentOpen.add(""+this.candidatAgentOpen);
 		update.put("candidatAgentOpen", updatecandidatAgentOpen);
-
+	
 		List<String> updategolemLocalisation = new ArrayList<String>();
 		updategolemLocalisation.add(""+this.golemLocalisation);
 		update.put("golemLocalisation", updategolemLocalisation);
@@ -661,7 +694,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		
 		this.sendMessageObjectCoalition(this.id_Coal + ": Update behaviour", this.members, update);
 	}
-	
+
 	//reception dee la mise a jours est envoie en ping pour si agent de coalition non a porter du leader
 	private void receivedUpdateDataBehaviour(ACLMessage msg) {
 		HashMap<String, List <String>> update;
@@ -716,6 +749,8 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			this.sendMessageObjectCoalition(request.get("father"), this.members, request);
 			//mettre a jour le step
 			this.stepMSG = Integer.parseInt(request.get("Step"));
+			//je regarde autour de moi si le golem à bougé
+			this.updateViewAgent();
 			//calcule de la position golem à envoyé
 			HashMap<String, Double> data_Position_Golem = ((ExploreSoloAgent)this.myAgent).getMap().listNodeGolemProba();
 			//envoie vers le mec qui ma envoyer le message
@@ -724,18 +759,20 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 				for(String node : data_Position_Golem.keySet()) {
 					data_Position_Golem_send.put(node, "" + data_Position_Golem.get(node));
 				}		
-				if(log) {
-					System.out.println("Demande de donnée pour la localisation du golem : data à envoyé : " + data_Position_Golem_send);
-				}
-			}			
+			}	
+			if(log) {
+				System.out.println("Demande de donnée pour la localisation du golem : " + data_Position_Golem);
+				System.out.println("Demande de donnée pour la localisation du golem : data à envoyé : " + data_Position_Golem_send);
+			}
 			data_Position_Golem_send.put("data", "2");
 			data_Position_Golem_send.put("agent", this.myAgent.getLocalName());
+			data_Position_Golem_send.put("Step", "" + this.stepMSG);
 			if(log) {
 				System.out.println("Demande de donnée pour la localisation du golem : envoie : " + data_Position_Golem_send);
 			}
 			HashMap <String, List <String>> father = new HashMap <String, List <String>> ();
 			father.put(request.get("father"), new ArrayList<String> ());
-			this.sendMessageObjectCoalition(request.get("proto"), father , data_Position_Golem);
+			this.sendMessageObjectCoalition(request.get("proto"), father , data_Position_Golem_send);
 		}
 		
 	}
@@ -748,18 +785,29 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		if((Integer.parseInt(allPosition.get("Step")) > this.stepMSG) && (Integer.parseInt(allPosition.get("data")) == 3)) {
 			//je note de qui j'obtien le message
 			this.fatherLastMSG.put(this.id_Coal + ": golem hunt strat 3", "" + allPosition.get("father"));
+			HashMap<String, List <String>> listAgent = new HashMap <String, List <String>> ();
+			for(String agent : allPosition.keySet()) {
+				if(!agent.equals("data") && !agent.equals("Step")) {
+					listAgent.put(agent, new ArrayList <String>());
+				}
+			}
 			//envoie du message pour agent plus loin (ping)
-			this.sendMessageObjectCoalition(allPosition.get("proto"), this.members, allPosition);
+			this.sendMessageObjectCoalition(allPosition.get("proto"), listAgent, allPosition);
 			//je regarde ou me positionner
 			this.goPosition = allPosition.get(this.myAgent.getLocalName());
+			if(log) {
+				System.out.println(this.myAgent.getLocalName() + " : go position : " + this.goPosition);
+			}
 			//demarrer la chasse
 			this.huntGolem = true;
 			//mettre a jour le step
 			this.stepMSG = Integer.parseInt(allPosition.get("Step"));
-			if(!this.goPosition.equals("0")) {
-				//je lance le calcule du chemin pour la nouvelle position et mis rend
-				if(!this.goPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())){
-					this.followPathNewPosition(this.goPosition);
+			if(!this.goPosition.toString().equals("null")) {
+				if(!this.goPosition.equals("0")) {
+					//je lance le calcule du chemin pour la nouvelle position et mis rend
+					if(!this.goPosition.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())){
+						this.followPathNewPosition(this.goPosition);
+					}
 				}
 			}
 			
@@ -789,7 +837,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 						System.out.println("Normalement c'est : " + this.positionAgent.get(agent));
 					}
 					//je vérifie que c'est bien la bonne position
-					if(this.positionAgent.get(agent).equals(position.get(agent))) {
+					if(!this.positionAgent.get(agent).equals(null) && this.positionAgent.get(agent).equals(position.get(agent))) {
 						this.verificationPositionAgent.remove(agent);
 						this.verificationPositionAgent.put(agent, true);
 					}
@@ -797,12 +845,22 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			}
 		}
 		
-		this.golemCatch = true;
-		for(String verifAgent : this.verificationPositionAgent.keySet()) {
-			if(!this.verificationPositionAgent.get(verifAgent)) {
-				this.golemCatch = false;
+		if(log) {
+			System.out.println("positionAgent : " + this.positionAgent.size() + " : neighborNodeGolem : " + this.neighborNodeGolem.size());
+		}
+		//si le nombre d'agent positionner égal au nombre de noeud voisin alors il y a assez d'agent pour l'attraper et donc on procéde a la vérification des positions
+		if(this.positionAgent.size() == this.neighborNodeGolem.size()-1) {
+			if(log) {
+				System.out.println("Bon nombre d'agent pour le bon nombre de noeud autour du golem");
+			}
+			this.golemCatch = true;
+			for(String verifAgent : this.verificationPositionAgent.keySet()) {
+				if(!this.verificationPositionAgent.get(verifAgent)) {
+					this.golemCatch = false;
+				}
 			}
 		}
+
 		
 		if(log) {
 			System.out.println("Reception bonne position agent : " + msg.getSender().getLocalName());
@@ -824,22 +882,33 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			System.out.println(this.myAgent.getLocalName() + " : chemin pour aller coincer le golem : " + path);
 		}
 		String posTemp = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
-		while(((AbstractDedaleAgent)this.myAgent).getCurrentPosition().equals(posTemp)) {
-			((AbstractDedaleAgent)this.myAgent).moveTo(path.get(0));
-		}
-		//on fait bouger l'agent jusqu'à là bas
-		for(int i = 1; i < path.size(); i++) {
-			//si la position temp n'est pas égal a la position de l'agent alors cela signifie qu'il c'est déplacer et peux donc avant de nouveau
-			if(!((AbstractDedaleAgent)this.myAgent).getCurrentPosition().equals(posTemp)){
-				posTemp = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
-				if(log) {
-					System.out.println(this.myAgent.getLocalName() + " : ma position : " + ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
-					System.out.println(this.myAgent.getLocalName() + " : je doitt aller en  : " + (path.get(i)));
+		if(!path.isEmpty()) {
+			while(((AbstractDedaleAgent)this.myAgent).getCurrentPosition().equals(posTemp)) {
+				((AbstractDedaleAgent)this.myAgent).moveTo(path.get(0));
+			}
+			try {
+				this.myAgent.doWait(500);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			//on fait bouger l'agent jusqu'à là bas
+			for(int i = 1; i < path.size(); i++) {
+				//si la position temp n'est pas égal a la position de l'agent alors cela signifie qu'il c'est déplacer et peux donc avant de nouveau
+				if(!((AbstractDedaleAgent)this.myAgent).getCurrentPosition().equals(posTemp)){
+					posTemp = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+					if(log) {
+						System.out.println(this.myAgent.getLocalName() + " : ma position : " + ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+						System.out.println(this.myAgent.getLocalName() + " : je doitt aller en  : " + (path.get(i)));
+					}
+					((AbstractDedaleAgent)this.myAgent).moveTo(path.get(i));
 				}
-				((AbstractDedaleAgent)this.myAgent).moveTo(path.get(i));
+				try {
+					this.myAgent.doWait(500);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}
-		
 		if(log) {
 			System.out.println(this.myAgent.getLocalName() + " : je suis en  : " + ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
 		}
@@ -847,12 +916,23 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	
 	//demande aux autre agents ou ils sentent le golem
 	private void giveDataGolem() {
+		this.waitAgentDataReturn = new ArrayList <String>();
+		for(String agent : this.members.keySet()) {
+			if(!agent.equals(this.myAgent.getLocalName())) {
+				this.waitAgentDataReturn.add(agent);
+			}
+		}
 		HashMap <String, String> msg = new HashMap <String, String> ();
 		msg.put("data", "1");
 		msg.put("msg", "Give your data golem!!!!");
 		msg.put("Step", "" + this.stepMSG);
 		this.sendMessageObjectCoalition(this.id_Coal + ": golem hunt strat", this.members, msg);
 		this.stepMSG ++;
+		this.waitDataGolemAllAgent = true;
+		this.huntGolem = false;
+		if(log) {
+			System.out.println(this.myAgent.getLocalName() + " : demande d'info au autre agent : " + msg);
+		}
 	}
 	
 	//dit aux autre agents d'arréter le recrutement
@@ -958,6 +1038,78 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		
 		msgSend.addReceiver(leader);
 		((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);	
+	}
+	
+	//MAJ de se que vois l'agent
+	private void updateViewAgent() {
+		this.golemMove = true;
+		//je reset mes donnée sur le golem (map)
+		((ExploreSoloAgent)this.myAgent).getMap().resetPourcentGolem();
+		List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//j'observe myPosition
+		if(log) {
+			System.out.println(this.myAgent.getLocalName() + " : Behaviour coalition vue par agent : " + lobs);
+		}
+		//je vais selectionner les node qui on un senteur de golem et mettre a jour la map
+		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter = lobs.iterator();
+
+		if(((ExploreSoloAgent)this.myAgent).getLeaderCoalition()) {
+			try {
+				this.myAgent.doWait(500);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		List <String> node_sent = new ArrayList<String>();
+		while(iter.hasNext()){
+			Couple<String, List<Couple<Observation, Integer>>> temp = iter.next();
+			List<Couple<Observation, Integer>> couple = temp.getRight();
+			String ID_node = temp.getLeft();
+			//si je sens le golem
+			if(couple.size() > 0) {
+				node_sent.add(ID_node);
+				// je mets a jour le noeud pour dire que je le sens							
+				((ExploreSoloAgent)this.myAgent).getMap().setGolemDetection(ID_node, true, ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+				//si la senteur est sur ma case
+				if(((AbstractDedaleAgent)this.myAgent).getCurrentPosition().equals(ID_node)) {
+					//alors le golem n'a pas bougé
+					this.golemMove = false;
+				}
+			}
+			else {
+				// je ne fait rien
+			}
+		}
+		
+		//puis je marque autour de tous les node qui ne sent pas qu'il ne peux pas y avoir de golem (réduit les posibilité de placement du golem)
+		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter2 = lobs.iterator();
+		while(iter2.hasNext()){
+			Couple<String, List<Couple<Observation, Integer>>> temp2 = iter2.next();
+			List<Couple<Observation, Integer>> couple2 = temp2.getRight();
+			String ID_node2 = temp2.getLeft();
+			//System.out.println("id, couple");
+			//System.out.println(ID_node);
+			//System.out.println(couple);
+			//si je sens le golem
+			if(couple2.size() > 0) {
+				//il ne se passe rien
+			}
+			else {
+				//System.out.println("je ne le sens pas");
+				((ExploreSoloAgent)this.myAgent).getMap().setGolemDetection(ID_node2, false, ((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+			}
+		}
+		//leader: met a jour (dans la coalition) la localisation de "senteur"
+		if(((ExploreSoloAgent)this.myAgent).getLeaderCoalition()) {
+			this.dataPositionGolem = ((ExploreSoloAgent)this.myAgent).getMap().listNodeGolemProba();//MAJ
+			if(this.golemMove) {
+				if(log) {
+					System.out.println(this.myAgent.getLocalName() + " : proba golem leader: " + this.dataPositionGolem);
+					System.out.println(this.myAgent.getLocalName() + " : Le golem à bougé!!!");
+				}
+				this.giveDataGolem();
+			}
+		}
 	}
 	
 	public boolean done() {

@@ -125,7 +125,7 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 					}
 				}
 			}			
-
+			/*
 			// si l'agent est dans une coalition non remplie et que ce n'est pas un message de ça coalition
 			else if (((ExploreSoloAgent)this.myAgent).getInCoalition() && !((ExploreSoloAgent)this.myAgent).getInCoalitionFull() && !((ExploreSoloAgent)this.myAgent).getIDCoalition().equals(msg.getContent()) ) {
 
@@ -221,6 +221,7 @@ public class ReceiveMessageSayGolemBehaviour extends SimpleBehaviour{
 					}
 				}    	
 			}  
+			*/
 		}
 	}
 

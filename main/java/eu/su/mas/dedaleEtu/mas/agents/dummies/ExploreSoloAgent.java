@@ -37,6 +37,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	private MapRepresentation myMap;
 	private boolean moving = true;
 	private boolean inPursuit = false; // true if the agent is in pursuit of a golem
+	private List<String> blackListMap = new ArrayList<String>();
 	private List<String> agentZoneList = new ArrayList<String>();
 	private List<String> agentPositionList = new ArrayList<String>();
 	private long startDate = System.currentTimeMillis();
@@ -63,39 +64,39 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 
 		// Enregistrement de l'agent dans les pages jaunes
 		DFAgentDescription dfd = new DFAgentDescription();
-        dfd.setName(getAID()); 
-        ServiceDescription sd = new ServiceDescription();
-        sd.setType("agent");
-        sd.setName(getLocalName());
-        dfd.addServices(sd);
-        try {  
-            DFService.register(this, dfd);  
-        }
-        catch (FIPAException fe) {
-        	fe.printStackTrace(); 
-        }
-		
+		dfd.setName(getAID()); 
+		ServiceDescription sd = new ServiceDescription();
+		sd.setType("agent");
+		sd.setName(getLocalName());
+		dfd.addServices(sd);
+		try {  
+			DFService.register(this, dfd);  
+		}
+		catch (FIPAException fe) {
+			fe.printStackTrace(); 
+		}
+
 		List<Behaviour> lb=new ArrayList<Behaviour>();
-		
+
 		/************************************************
 		 * 
 		 * ADD the behaviours of the Dummy Moving Agent
 		 * 
 		 ************************************************/
-		
+
 		lb.add(new ExploSoloBehaviour(this,this.myMap));
 		lb.add(new ReceiveMessageBehaviour(this));
 		lb.add(new SayHello(this));
 		lb.add(new ReceiveMessageSayGolemBehaviour(this));
-		
+
 		/***
-		 
+
 		 * MANDATORY TO ALLOW YOUR AGENT TO BE DEPLOYED CORRECTLY
 		 */
-		
-		
+
+
 		addBehaviour(new startMyBehaviours(this,lb));
-		
+
 		System.out.println("the agent "+this.getLocalName()+ " is started");
 
 	}
@@ -115,7 +116,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	public void setInPursuit(boolean value) {
 		this.inPursuit = value;
 	}
-		
+	
 	public void addAgentZoneList(String agent) {
 		this.agentZoneList.add(agent);
 	}

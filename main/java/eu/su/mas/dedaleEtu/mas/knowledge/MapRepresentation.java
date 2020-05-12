@@ -399,7 +399,7 @@ public class MapRepresentation implements Serializable {
 		List<String> node_arround = this.neighborNode(ID_node);
 		for(int i = 0 ; i < node_arround.size(); ) {
 			//si le noeud contient un agent, est égal à myPosition
-			if (node_arround.get(i).equals(myPosition) || !this.g.getNode(node_arround.get(i)).getAttribute("agent_present").equals("-1")) {
+			if (node_arround.get(i).equals(myPosition)) {
 				//System.out.println("ici");
 				node_arround.remove(i);
 			}
@@ -409,7 +409,7 @@ public class MapRepresentation implements Serializable {
 		}
 		//si il reste des voisins après le tri
 		if(node_arround.size() > 0) {
-			double pourcent = 100/node_arround.size();
+			double pourcent = 100/(node_arround.size() + 1);
 	
 			//on met à jour les probas de trouver un golem sur les noeuds alentour
 			for(String n : node_arround) {
@@ -417,6 +417,7 @@ public class MapRepresentation implements Serializable {
 					this.g.getNode(n).setAttribute("proba_golem_present", (Double) this.g.getNode(n).getAttribute("proba_golem_present") + pourcent);
 				}
 			}		
+			this.g.getNode(ID_node).setAttribute("proba_golem_present", (Double) this.g.getNode(ID_node).getAttribute("proba_golem_present") + pourcent);
 		}
 	}
 	
@@ -425,9 +426,12 @@ public class MapRepresentation implements Serializable {
 	public void setGolemDetection(String ID_node, boolean sent, String myPosition) {
 		this.g.getNode(ID_node).setAttribute("golem_scent", sent);
 		if(!sent) {
-			//si je ne sent rien sur ma position
-			if(ID_node.contentEquals(myPosition)) {
-				this.g.getNode(ID_node).setAttribute("proba_golem_present", 0.0);
+			this.g.getNode(ID_node).setAttribute("proba_golem_present", 0.0);
+			//demande voisin node et mettre tous à 0
+			List <String> neighborNodeTemp = this.neighborNode(ID_node);
+			for(int i = 0; i < neighborNodeTemp.size(); i++) {
+				this.g.getNode(neighborNodeTemp.get(i)).setAttribute("golem_scent", false);
+				this.g.getNode(neighborNodeTemp.get(i)).setAttribute("proba_golem_present", 0.0);
 			}
 		}
 		else {
@@ -513,5 +517,53 @@ public class MapRepresentation implements Serializable {
 		this.avDegree = Toolkit.averageDegree(g);
 		System.out.println("Average degree = " + this.avDegree);
 	}
-		
+	
+	public void analyseDetection(List<Couple<String,List<Couple<Observation,Integer>>>> lobs, String myPosition) {
+		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter = lobs.iterator();
+		List <String> node_sent = new ArrayList<String>();
+		while(iter.hasNext()){
+			Couple<String, List<Couple<Observation, Integer>>> temp = iter.next();
+			List<Couple<Observation, Integer>> couple = temp.getRight();
+			String ID_node = temp.getLeft();
+			//System.out.println("id, couple");
+			//System.out.println(ID_node);
+			//System.out.println(couple);
+			//si je sens le golem
+			if(couple.size() > 0) {
+				node_sent.add(ID_node);
+				// je mets a jour le noeud pour dire que je le sens
+				//System.out.println("J'attends les ordres !!!");
+				//System.out.println("je sens");				
+				
+				this.setGolemDetection(ID_node, true, myPosition);
+			}
+			else {
+				//System.out.println("je ne le sens pas");
+				this.setGolemDetection(ID_node, false, myPosition);
+			}
+		}
+			
+		//puis je marque autour de tous les node qui ne sent pas qu'il ne peux pas y avoir de golem (réduit les posibilité de placement du golem)
+		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter2 = lobs.iterator();
+		while(iter2.hasNext()){
+			Couple<String, List<Couple<Observation, Integer>>> temp2 = iter2.next();
+			List<Couple<Observation, Integer>> couple2 = temp2.getRight();
+			String ID_node2 = temp2.getLeft();
+			//System.out.println("id, couple");
+			//System.out.println(ID_node);
+			//System.out.println(couple);
+			//si je sens le golem
+			if(couple2.size() > 0) {
+				//il ne se passe rien
+			}
+			else {
+				//System.out.println("je ne le sens pas");
+				//je demande les voisins du node
+				List <String> listNode = this.neighborNode(ID_node2);
+				for(int i = 0; i < listNode.size(); i++) {
+					this.setGolemDetection(listNode.get(i), false, myPosition);
+				}
+			}
+		}
+	}
 }
