@@ -27,7 +27,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	
 	private static final long serialVersionUID = 2L;
 	private boolean finished;
-	private boolean log = false;
+	private boolean log = true;
 	
 	private static final int wait = 2000;
 	private String id_Coal;//id de la coalition (utilisé pour les echange de message)
@@ -92,7 +92,6 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	
 	public CoalitionBehaviour(final Agent myagent, String id) {
 		super(myagent);
-
 		this.id_Coal = id;
 
 		if(((ExploreSoloAgent)this.myAgent).getLeaderCoalition()) {
@@ -126,7 +125,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		this.fatherLastMSG.put(this.id_Coal + ": In position", "");
 		this.golemMove = false;
 		this.posLeader = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
-		this.waitTimerData = 250;
+		this.waitTimerData = 150;
 		
 		((ExploreSoloAgent) this.myAgent).setMoving(false);//je ne bouge que sur ordre de la coalition
 		//definir où se trouve le golem et mettre à jour si leader
@@ -141,6 +140,8 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		//this.maxAgent = ((ExploreSoloAgent)this.myAgent).getMap().getAvDegree(); // degré moyen du graphe
 		//this.maxAgent = 2; //pour test
 		
+		System.out.println(this.myAgent.getLocalName() + " : Behaviour de coalition " + this.id_Coal + " actif");
+		
 		
 	}
 	
@@ -149,7 +150,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		//si la coalition est active
 		if(this.activeCoalition) {
 
-			System.out.println(this.myAgent.getLocalName() + " : Behaviour de coalition " + this.id_Coal + " actif");
+			//System.out.println(this.myAgent.getLocalName() + " : Behaviour de coalition " + this.id_Coal + " actif");
 
 			//Template message neutre, utilisé actuellement pour:
 			//Les demandes et réponses pour entrer dans la coalition
@@ -232,14 +233,14 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 						if(log) {
 							System.out.println("Reception d'une demande de localisation du golem");
 						}
-						this.golemPosition(msg);
+						this.golemPosition(msgGolemPosition);
 					}			
 					//reception d'une demande de nombre d'agent
 					if (msgnbAgent != null && !msgnbAgent.getSender().getLocalName().equals(this.myAgent.getAID().getLocalName())) {
 						if(log) {
 							System.out.println("Reception d'une demande du nombre d'agent dans la coalition");
 						}
-						this.nbAgentCoalition(msg);
+						this.nbAgentCoalition(msgnbAgent);
 					}
 					//si la coalition est pleine
 					if (this.members.size() >= this.maxAgent) {
@@ -254,7 +255,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 						this.sendCoalitionFull();
 						//Demande à tous les agents de la coalition si ils voient un golem actuellement et récup data
 						this.giveDataGolem();
-					}			
+					}
 				}
 				
 				//réception d'une demande de dissolution et changement de coalition
@@ -512,7 +513,8 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		ACLMessage msgRespond = new ACLMessage(ACLMessage.INFORM);
 		msgRespond.setSender(this.myAgent.getAID());
 		msgRespond.setProtocol(this.id_Coal + ": nb Agent");
-		msgRespond.setContent("" + this.members.size());
+		msgRespond.setContent("" + this.members.size());	
+		System.out.println(this.myAgent.getLocalName() + " : envoie nb agent à " + msg.getSender().getLocalName());
 		msgRespond.addReceiver(new AID(msg.getSender().getLocalName(),AID.ISLOCALNAME));
 		((AbstractDedaleAgent)this.myAgent).sendMessage(msgRespond);
 	}
@@ -902,15 +904,22 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		List <String> oldPath = new ArrayList <String>();
 		//oldPath.add(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
 		String posTemp = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+		int stopWhile = 0;
 			//on fait bouger l'agent jusqu'à là bas
-			while(!((AbstractDedaleAgent)this.myAgent).getCurrentPosition().equals(this.goPosition)) {
+			while(!((AbstractDedaleAgent)this.myAgent).getCurrentPosition().equals(this.goPosition) && stopWhile < 20) {
+				stopWhile ++;
 				// en établie le meilleur chemin
 				List <String> path = ((ExploreSoloAgent)this.myAgent).getMap().getShortestPath(((AbstractDedaleAgent)this.myAgent).getCurrentPosition() , node);
+				if(log) {
+					System.out.println(this.myAgent.getLocalName() + " chemin calculeé : " + path);
+				}
+				/*
 				try {
 					this.myAgent.doWait(500);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
+				*/
 				//si le chemin n'est pas vide
 				if(!path.isEmpty()) {
 					if(log) {
@@ -990,7 +999,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	
 	private void dissolveAndChangeCoal(ACLMessage msg) {
 		// Le message contient un string de l'AID du leader de la coalition à rejoindre
-		AID otherCoalLeader = new AID(msg.getContent(), AID.ISLOCALNAME);
+		String otherCoalLeader = msg.getContent();
 		
 		// TODO: Est-ce qu'il est nécessaire de faire un sendCoalitionFull() d'abord ?
 		
@@ -1001,6 +1010,8 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			HashMap <String, List <String>> agents = new HashMap <String, List <String>>(this.members);
 			agents.remove(this.myAgent.getAID().getLocalName()); // je me retire de la liste des agents à qui transmettre le message
 			this.sendMessageStringCoalition(msg.getContent() + ": dissolve and go to new coalition", agents, otherCoalLeader.toString());
+			
+			this.requestEntryCoalition(otherCoalLeader);
 						
 			// 2) Prévenir le leader que des agents arrivent ? est-ce vraiment utile
 			
@@ -1058,7 +1069,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			}
 			// Si oui, je demande au leader (dont l'AID a été transmise par message) d'entrer dans sa coalition
 			if (agentsToChangeCoal.contains(this.myAgent.getAID().getLocalName())) { 
-				this.requestEntryCoalition(new AID(agentsToChangeCoal.get(0), AID.ISLOCALNAME));
+				this.requestEntryCoalition(agentsToChangeCoal.get(0));
 			}
 			// Sinon, je fais juste suivre le message
 			else { 				
@@ -1068,8 +1079,10 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		}	
 	}
 	
-	private void requestEntryCoalition(AID leader) {
+	private void requestEntryCoalition(String leader) {
 		// Demande au leader passé en paramètre d'entrer dans sa coalition
+		((ExploreSoloAgent)this.myAgent).setInCoalition(false);
+		((ExploreSoloAgent)this.myAgent).setLeaderCoalition(false);
 		
 		ACLMessage msgSend = new ACLMessage(ACLMessage.INFORM);
 		msgSend.setSender(this.myAgent.getAID());
@@ -1084,8 +1097,11 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 			e.printStackTrace();
 		}
 		
-		msgSend.addReceiver(leader);
+		msgSend.addReceiver(new AID(leader, AID.ISLOCALNAME));
 		((AbstractDedaleAgent)this.myAgent).sendMessage(msgSend);	
+		
+		//suspention coalition
+		this.activeCoalition = false;
 	}
 	
 	//MAJ de se que vois l'agent
@@ -1099,14 +1115,6 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 		}
 		//je vais selectionner les node qui on un senteur de golem et mettre a jour la map
 		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter = lobs.iterator();
-
-		if(((ExploreSoloAgent)this.myAgent).getLeaderCoalition()) {
-			try {
-				this.myAgent.doWait(500);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
 
 		List <String> node_sent = new ArrayList<String>();
 		while(iter.hasNext()){

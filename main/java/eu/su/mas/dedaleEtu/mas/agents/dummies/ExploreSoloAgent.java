@@ -50,6 +50,7 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	private String coalitionId;
 	private String leaderAID = ""; // identifiant du leader
 	private int coalitionSize = 1; // taille de la coalition 
+	private boolean SayGolemOK;
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -69,6 +70,8 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 		sd.setType("agent");
 		sd.setName(getLocalName());
 		dfd.addServices(sd);
+		this.inCoalitionFull = false;
+		this.SayGolemOK = true;
 		try {  
 			DFService.register(this, dfd);  
 		}
@@ -236,5 +239,13 @@ public class ExploreSoloAgent extends AbstractDedaleAgent {
 	
 	public boolean getWaitEnterCoalition(){
 		return this.waitEnterCoalition;
+	}
+	
+	public boolean getSayGolemOK(){
+		return this.SayGolemOK;
+	}
+	
+	public void setSayGolemOK(boolean value){
+		this.SayGolemOK =  value;
 	}
 }

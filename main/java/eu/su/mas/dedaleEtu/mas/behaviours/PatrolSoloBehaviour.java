@@ -161,6 +161,7 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 						String id_Behaviour = ((ExploreSoloAgent)this.myAgent).idBehaviourCreation();//je crée un identifiant de coalition
 						this.myAgent.addBehaviour(new CoalitionBehaviour(((ExploreSoloAgent)this.myAgent), id_Behaviour));//je lance le behaviour de coalition
 						this.myAgent.addBehaviour(new SayGolem(((ExploreSoloAgent)this.myAgent), id_Behaviour));
+						((ExploreSoloAgent)this.myAgent).entreNewCoalition(id_Behaviour);
 						((ExploreSoloAgent)this.myAgent).setMoving(false);	
 						
 						List <String> neighborNode = ((ExploreSoloAgent)this.myAgent).getMap().neighborNode(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());//determine les neouds voisins

@@ -59,20 +59,23 @@ public class SayGolem extends TickerBehaviour{
 		}
 	
 		// Affichage des résultats
+		/*
 		System.out.println(this.myAgent.getName() + " : PAGES JAUNES");
         if (this.agentsAID.size() > 0) {
         	for (AID aid : this.agentsAID) {
         		System.out.println(aid);
         	}
         }
-        System.out.println(this.agentsAID.size() + " résultats" );
+        */
+        //System.out.println(this.agentsAID.size() + " résultats" );
 
 	}
 
 	@Override
 	public void onTick() {
 		
-		if (!((ExploreSoloAgent)this.myAgent).getInCoalitionFull()) {
+		if (!((ExploreSoloAgent)this.myAgent).getInCoalitionFull() && ((ExploreSoloAgent)this.myAgent).getSayGolemOK()) {
+			System.out.println(this.myAgent.getLocalName() + ": say golem!");
 			// Update position
 			String myPosition = ((ExploreSoloAgent)this.myAgent).getCurrentPosition();
 					//A message is defined by : a performative, a sender, a set of receivers, (a protocol),(a content (and/or contentOBject))
@@ -82,7 +85,7 @@ public class SayGolem extends TickerBehaviour{
 		
 			if (myPosition != "") {
 				((ExploreSoloAgent)this.myAgent).cleanAgentPositionList();				
-				System.out.println("GOLEM !!!!!!!!!!! Agent "+ this.myAgent.getLocalName() + " has seen a golem when at " + myPosition);
+				//System.out.println("GOLEM !!!!!!!!!!! Agent "+ this.myAgent.getLocalName() + " has seen a golem when at " + myPosition);
 				msg.setContent(this.idCoal);
 				
 				// Broadcast à tous les agents

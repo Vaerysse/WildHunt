@@ -64,13 +64,13 @@ public class SayHello extends TickerBehaviour{
 		}
 	
 		// Affichage des résultats
-		System.out.println(this.myAgent.getName() + " : PAGES JAUNES");
+		//System.out.println(this.myAgent.getName() + " : PAGES JAUNES");
         if (this.agentsAID.size() > 0) {
         	for (AID aid : this.agentsAID) {
         		System.out.println(aid);
         	}
         }
-        System.out.println(this.agentsAID.size() + " résultats" );
+        //System.out.println(this.agentsAID.size() + " résultats" );
 	}
 
 	@Override
@@ -84,7 +84,7 @@ public class SayHello extends TickerBehaviour{
 
 		if (myPosition!="" && !((ExploreSoloAgent)this.myAgent).isInPursuit()){
 			((ExploreSoloAgent)this.myAgent).cleanAgentPositionList();
-			System.out.println("Agent "+this.myAgent.getLocalName()+ " is trying to reach its friends");
+			//System.out.println("Agent "+this.myAgent.getLocalName()+ " is trying to reach its friends");
 			msg.setContent(myPosition);
 			
 			// Broadcast à tous les agents
