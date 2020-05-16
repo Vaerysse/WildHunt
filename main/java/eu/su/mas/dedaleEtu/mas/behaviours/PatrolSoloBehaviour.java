@@ -42,6 +42,9 @@ public class PatrolSoloBehaviour extends SimpleBehaviour{
 		if (this.myMap == null) {
 			this.finished = true;
 		}
+		if(((ExploreSoloAgent) this.myAgent).isInPursuit()) {
+			finished = true;
+		}
 		
 		//0) Retrieve the current position
 		String myPosition = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();

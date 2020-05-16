@@ -27,7 +27,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 	
 	private static final long serialVersionUID = 2L;
 	private boolean finished;
-	private boolean log = true;
+	private boolean log = false;
 	
 	private static final int wait = 2000;
 	private String id_Coal;//id de la coalition (utilisé pour les echange de message)
@@ -313,6 +313,7 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 					//si le timer de donnée est terminé
 					if(System.currentTimeMillis() - this.timerData > this.waitTimerData ) {
 						this.waitDataGolemAllAgent = false;
+						this.huntGolemProcess = true;//on lance le calcule
 					}
 				}
 				
@@ -348,12 +349,13 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 					this.huntGolem = true;
 				}
 				
-				//if(this.huntGolem) {
+				if(this.huntGolem) {
+					this.sendPositionAgentHuntGolem();
+				}
 					//je recois des message d'agents qui me disent qu'ils sont en position
 					if(msgInPosition != null && !this.golemCatch && !msgInPosition.getSender().getLocalName().equals(this.myAgent.getLocalName())) {
 						this.sendAgentVerifPosition(msgInPosition);				
 						}
-				//}	
 				//le golem est attrapé
 				if(this.golemCatch) {
 					this.huntGolem = false;
@@ -911,15 +913,15 @@ public class CoalitionBehaviour extends SimpleBehaviour{
 				// en établie le meilleur chemin
 				List <String> path = ((ExploreSoloAgent)this.myAgent).getMap().getShortestPath(((AbstractDedaleAgent)this.myAgent).getCurrentPosition() , node);
 				if(log) {
-					System.out.println(this.myAgent.getLocalName() + " chemin calculeé : " + path);
+					System.out.println(this.myAgent.getLocalName() + " chemin calcule : " + path);
 				}
-				/*
+				
 				try {
 					this.myAgent.doWait(500);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				*/
+				
 				//si le chemin n'est pas vide
 				if(!path.isEmpty()) {
 					if(log) {
